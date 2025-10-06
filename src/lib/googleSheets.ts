@@ -23,15 +23,18 @@ export async function fetchProducts(): Promise<Product[]> {
       
       const values = parseCSVLine(lines[i]);
       
-      if (values.length >= 6) {
+      if (values.length >= 7) {
+        // Convert comma to dot for price (Brazilian format: 35,99 -> 35.99)
+        const priceStr = values[3]?.replace(',', '.') || '0';
+        
         products.push({
-          id: `product-${i}`,
-          name: values[0] || '',
-          description: values[1] || '',
-          price: parseFloat(values[2]) || 0,
-          category: values[3] || '',
-          imageUrl: values[4] || '',
+          id: values[0] || `product-${i}`,
+          name: values[1] || '',
+          description: values[2] || '',
+          price: parseFloat(priceStr) || 0,
+          category: values[4] || '',
           stock: parseInt(values[5]) || 0,
+          imageUrl: values[6] || '',
         });
       }
     }
