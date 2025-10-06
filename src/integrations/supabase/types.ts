@@ -14,7 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      orders: {
+        Row: {
+          created_at: string
+          customer_email: string
+          customer_name: string | null
+          id: string
+          payment_id: string | null
+          payment_method: string
+          payment_status: string
+          pix_qr_code: string | null
+          pix_qr_code_base64: string | null
+          product_id: string
+          product_name: string
+          product_price: number
+          ticket_url: string | null
+          transaction_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email: string
+          customer_name?: string | null
+          id?: string
+          payment_id?: string | null
+          payment_method: string
+          payment_status?: string
+          pix_qr_code?: string | null
+          pix_qr_code_base64?: string | null
+          product_id: string
+          product_name: string
+          product_price: number
+          ticket_url?: string | null
+          transaction_amount: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string
+          customer_name?: string | null
+          id?: string
+          payment_id?: string | null
+          payment_method?: string
+          payment_status?: string
+          pix_qr_code?: string | null
+          pix_qr_code_base64?: string | null
+          product_id?: string
+          product_name?: string
+          product_price?: number
+          ticket_url?: string | null
+          transaction_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
