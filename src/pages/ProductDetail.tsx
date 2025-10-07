@@ -8,11 +8,13 @@ import { Product } from "@/types/product";
 import { fetchProducts } from "@/lib/googleSheets";
 import { ShoppingCart, Shield, Zap, ArrowLeft, Package } from "lucide-react";
 import { toast } from "sonner";
+import { CheckoutModal } from "@/components/CheckoutModal";
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   useEffect(() => {
     loadProduct();
@@ -31,9 +33,9 @@ export default function ProductDetail() {
     }
   };
 
-  const handleAddToCart = () => {
+  const handleBuyNow = () => {
     if (product) {
-      toast.success(`${product.name} adicionado ao carrinho!`);
+      setCheckoutOpen(true);
     }
   };
 
@@ -160,7 +162,7 @@ export default function ProductDetail() {
                 size="xl"
                 variant={isOutOfStock ? "outline" : "hero"}
                 disabled={isOutOfStock}
-                onClick={handleAddToCart}
+                onClick={handleBuyNow}
                 className="w-full"
               >
                 {isOutOfStock ? (
@@ -171,10 +173,18 @@ export default function ProductDetail() {
                 ) : (
                   <>
                     <ShoppingCart className="h-5 w-5" />
-                    Adicionar ao Carrinho
+                    Comprar Agora
                   </>
                 )}
               </Button>
+              
+              {product && (
+                <CheckoutModal
+                  product={product}
+                  open={checkoutOpen}
+                  onOpenChange={setCheckoutOpen}
+                />
+              )}
 
               <div className="border-t border-border pt-6 space-y-4">
                 <h3 className="font-bold">Dúvidas Frequentes</h3>
