@@ -47,9 +47,6 @@ serve(async (req) => {
     const paymentBody: any = {
       transaction_amount: paymentRequest.productPrice,
       description: paymentRequest.productName,
-      payment_method_id: paymentRequest.paymentMethod === 'pix' ? 'pix' : 
-                         paymentRequest.paymentMethod === 'ticket' ? 'bolbradesco' : 
-                         'master',
       payer: {
         email: paymentRequest.customerEmail,
         ...(paymentRequest.customerName && {
@@ -59,15 +56,15 @@ serve(async (req) => {
       }
     };
 
-    // Adicionar dados do cartão se for pagamento com cartão
-    if (paymentRequest.paymentMethod === 'credit_card' && paymentRequest.cardData) {
-      const { cardData } = paymentRequest;
-      paymentBody.token = 'card_token_placeholder'; // Será gerado no frontend
-      paymentBody.installments = cardData.installments;
-      paymentBody.payer.identification = {
-        type: cardData.identificationType,
-        number: cardData.identificationNumber
-      };
+    // Configurar de acordo com o método de pagamento
+    if (paymentRequest.paymentMethod === 'pix') {
+      paymentBody.payment_method_id = 'pix';
+    } else if (paymentRequest.paymentMethod === 'ticket') {
+      paymentBody.payment_method_id = 'bolbradesco';
+    } else if (paymentRequest.paymentMethod === 'credit_card' && paymentRequest.cardData) {
+      // Para cartão de crédito, seria necessário gerar o token no frontend
+      // Por enquanto, vamos retornar um erro informando que precisa implementar
+      throw new Error('Pagamento com cartão requer integração do Mercado Pago SDK no frontend para gerar o card token');
     }
 
     // Criar pagamento no Mercado Pago
