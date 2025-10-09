@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ interface CheckoutModalProps {
 }
 
 export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProps) => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'credit_card' | 'ticket'>('pix');
   const [customerEmail, setCustomerEmail] = useState('');
@@ -90,13 +92,9 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
           }
         } else if (data.status === 'approved') {
           toast.success('Pagamento aprovado!');
-          // Abrir chat Tawk.to automaticamente após pagamento aprovado
-          if (typeof window !== 'undefined' && (window as any).Tawk_API) {
-            (window as any).Tawk_API.maximize();
-          }
-          setTimeout(() => {
-            onOpenChange(false);
-          }, 2000);
+          // Redirecionar para página de sucesso
+          onOpenChange(false);
+          navigate(`/pedido-concluido?id=${data.orderId}`);
         } else {
           toast.info(`Status do pagamento: ${data.status}`);
         }
