@@ -90,6 +90,10 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
           }
         } else if (data.status === 'approved') {
           toast.success('Pagamento aprovado!');
+          // Abrir chat Tawk.to automaticamente após pagamento aprovado
+          if (typeof window !== 'undefined' && (window as any).Tawk_API) {
+            (window as any).Tawk_API.maximize();
+          }
           setTimeout(() => {
             onOpenChange(false);
           }, 2000);
@@ -285,6 +289,14 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
             >
               Copiar Código PIX
             </Button>
+            <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+              <p className="text-lg font-bold text-primary mb-2">
+                💬 Pagamento Aprovado? Clique no chat abaixo para Entrega Imediata da sua Key/Conta!
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Nosso suporte responde em segundos para entregar sua compra.
+              </p>
+            </div>
           </div>
         )}
 
@@ -297,6 +309,14 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
             >
               Visualizar Boleto
             </Button>
+            <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+              <p className="text-lg font-bold text-primary mb-2">
+                💬 Pagamento Aprovado? Clique no chat abaixo para Entrega Imediata da sua Key/Conta!
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Nosso suporte responde em segundos para entregar sua compra.
+              </p>
+            </div>
           </div>
         )}
       </DialogContent>
