@@ -1,13 +1,9 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart, Search, Menu } from "lucide-react";
+import { Search, Menu } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 
-interface HeaderProps {
-  cartItemsCount?: number;
-}
-
-export function Header({ cartItemsCount = 0 }: HeaderProps) {
+export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
@@ -41,17 +37,6 @@ export function Header({ cartItemsCount = 0 }: HeaderProps) {
               <Search className="h-4 w-4" />
             </Button>
           </div>
-
-          <Link to="/cart">
-            <Button variant="outline" size="icon" className="relative">
-              <ShoppingCart className="h-4 w-4" />
-              {cartItemsCount > 0 && (
-                <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-xs flex items-center justify-center text-primary-foreground">
-                  {cartItemsCount}
-                </span>
-              )}
-            </Button>
-          </Link>
 
           <Button variant="ghost" size="icon" className="md:hidden">
             <Menu className="h-5 w-5" />

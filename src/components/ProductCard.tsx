@@ -1,15 +1,14 @@
 import { Product } from "@/types/product";
 import { Button } from "./ui/button";
-import { ShoppingCart, Package } from "lucide-react";
+import { Package } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "./ui/badge";
 
 interface ProductCardProps {
   product: Product;
-  onAddToCart?: (product: Product) => void;
 }
 
-export function ProductCard({ product, onAddToCart }: ProductCardProps) {
+export function ProductCard({ product }: ProductCardProps) {
   const isOutOfStock = product.stock === 0;
 
   return (
@@ -50,29 +49,17 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
                 R$ {product.price.toFixed(2)}
               </span>
             </div>
-            <Button
-              size="sm"
-              variant={isOutOfStock ? "outline" : "cta"}
-              disabled={isOutOfStock}
-              onClick={(e) => {
-                e.preventDefault();
-                if (onAddToCart && !isOutOfStock) {
-                  onAddToCart(product);
-                }
-              }}
-            >
-              {isOutOfStock ? (
-                <>
-                  <Package className="h-4 w-4" />
-                  Esgotado
-                </>
-              ) : (
-                <>
-                  <ShoppingCart className="h-4 w-4" />
-                  Comprar
-                </>
-              )}
-            </Button>
+            {isOutOfStock && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled
+                onClick={(e) => e.preventDefault()}
+              >
+                <Package className="h-4 w-4" />
+                Esgotado
+              </Button>
+            )}
           </div>
 
           {!isOutOfStock && (

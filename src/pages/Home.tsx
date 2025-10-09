@@ -29,10 +29,6 @@ export default function Home() {
     }
   };
 
-  const handleAddToCart = (product: Product) => {
-    toast.success(`${product.name} adicionado ao carrinho!`);
-  };
-
   const featuredProducts = products.filter(p => p.stock > 0).slice(0, 6);
 
   return (
@@ -65,7 +61,6 @@ export default function Home() {
                   <ProductCard
                     key={product.id}
                     product={product}
-                    onAddToCart={handleAddToCart}
                   />
                 ))}
               </div>

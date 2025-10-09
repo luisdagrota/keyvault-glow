@@ -54,10 +54,6 @@ export default function Products() {
     setFilteredProducts(filtered);
   };
 
-  const handleAddToCart = (product: Product) => {
-    toast.success(`${product.name} adicionado ao carrinho!`);
-  };
-
   const categories = ["all", ...Array.from(new Set(products.map(p => p.category)))];
 
   return (
@@ -117,7 +113,6 @@ export default function Products() {
                 <ProductCard
                   key={product.id}
                   product={product}
-                  onAddToCart={handleAddToCart}
                 />
               ))}
             </div>
