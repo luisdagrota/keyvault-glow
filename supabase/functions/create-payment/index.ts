@@ -44,9 +44,12 @@ serve(async (req) => {
     console.log('Creating payment for:', paymentRequest.productName);
 
     // Preparar body base para Mercado Pago
+    const webhookUrl = `${supabaseUrl}/functions/v1/mercadopago-webhook`;
+    
     const paymentBody: any = {
       transaction_amount: paymentRequest.productPrice,
       description: paymentRequest.productName,
+      notification_url: webhookUrl,
       payer: {
         email: paymentRequest.customerEmail,
         ...(paymentRequest.customerName && {
@@ -55,6 +58,8 @@ serve(async (req) => {
         })
       }
     };
+    
+    console.log('Webhook URL configured:', webhookUrl);
 
     // Configurar de acordo com o método de pagamento
     if (paymentRequest.paymentMethod === 'pix') {
