@@ -46,7 +46,20 @@ serve(async (req) => {
     });
 
     if (!mpResponse.ok) {
-      throw new Error(`Mercado Pago API error: ${mpResponse.status}`);
+      // Se for 404, pode ser ID de teste do simulador - retornar 200 para não reproces sar
+      if (mpResponse.status === 404) {
+        console.log('Payment not found (possibly test ID):', paymentId);
+        return new Response(JSON.stringify({ received: true, note: 'Payment not found' }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      // Para outros erros, também retornar 200 mas logar o erro
+      console.error(`Mercado Pago API error: ${mpResponse.status}`);
+      return new Response(JSON.stringify({ received: true, error: 'API error' }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     const paymentData = await mpResponse.json();
@@ -65,12 +78,12 @@ serve(async (req) => {
       .from('orders')
       .select('*')
       .eq('payment_id', paymentId.toString())
-      .single();
+      .maybeSingle();
 
-    if (selectError) {
-      console.error('Error finding order:', selectError);
+    if (selectError || !order) {
+      console.error('Error finding order or order not found:', selectError);
       // Retorna 200 mesmo assim para não reprocessar webhook
-      return new Response(JSON.stringify({ received: true }), {
+      return new Response(JSON.stringify({ received: true, note: 'Order not found' }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
