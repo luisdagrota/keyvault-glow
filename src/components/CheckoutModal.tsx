@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,8 @@ interface CheckoutModalProps {
 
 export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProps) => {
   const navigate = useNavigate();
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'credit_card' | 'ticket'>('pix');
   const [customerEmail, setCustomerEmail] = useState('');
@@ -37,6 +39,7 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
   const [pixQrCodeBase64, setPixQrCodeBase64] = useState('');
   const [ticketUrl, setTicketUrl] = useState('');
   const [paymentId, setPaymentId] = useState('');
+  const [currentOrderId, setCurrentOrderId] = useState('');
 
   const handleCheckout = async () => {
     if (!customerEmail || !customerName) {
@@ -79,17 +82,22 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
 
       if (data.success) {
         setPaymentId(data.paymentId);
+        setCurrentOrderId(data.orderId);
         
         if (paymentMethod === 'pix') {
           setPixQrCode(data.pixQrCode);
           setPixQrCodeBase64(data.pixQrCodeBase64);
           toast.success('PIX gerado! Escaneie o QR Code para pagar');
+          // Iniciar polling para PIX
+          startPaymentPolling(data.orderId);
         } else if (paymentMethod === 'ticket') {
           setTicketUrl(data.ticketUrl);
           toast.success('Boleto gerado! Clique no link para visualizar');
           if (data.ticketUrl) {
             window.open(data.ticketUrl, '_blank');
           }
+          // Iniciar polling para Boleto
+          startPaymentPolling(data.orderId);
         } else if (data.status === 'approved') {
           toast.success('Pagamento aprovado!');
           // Redirecionar para página de sucesso
@@ -106,6 +114,60 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
       setLoading(false);
     }
   };
+
+  const startPaymentPolling = (orderId: string) => {
+    // Limpar qualquer polling anterior
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+
+    // Verificar status a cada 5 segundos
+    pollingIntervalRef.current = setInterval(async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('check-payment-status', {
+          body: { orderId }
+        });
+
+        if (error) {
+          console.error('Erro ao verificar status:', error);
+          return;
+        }
+
+        console.log('Status do pagamento:', data.status);
+
+        if (data.status === 'approved') {
+          // Pagamento aprovado - parar polling e redirecionar
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+          }
+
+          toast.success('🎉 Pagamento Aprovado!');
+          
+          // Abrir chat Tawk.to
+          if (typeof window !== 'undefined' && (window as any).Tawk_API) {
+            (window as any).Tawk_API.maximize();
+          }
+
+          setTimeout(() => {
+            onOpenChange(false);
+            navigate(`/pedido-concluido?id=${orderId}`);
+          }, 1500);
+        }
+      } catch (error) {
+        console.error('Erro no polling:', error);
+      }
+    }, 5000); // Verificar a cada 5 segundos
+  };
+
+  // Cleanup ao desmontar componente
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

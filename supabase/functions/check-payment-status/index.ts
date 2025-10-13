@@ -12,44 +12,50 @@ serve(async (req) => {
   }
 
   try {
-    const { paymentId } = await req.json();
-    
-    const accessToken = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN');
-    if (!accessToken) {
-      throw new Error('MERCADOPAGO_ACCESS_TOKEN not configured');
+    const { orderId } = await req.json();
+
+    if (!orderId) {
+      return new Response(
+        JSON.stringify({ error: 'Order ID is required' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Consultar status no Mercado Pago
-    const mpResponse = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`
-      }
-    });
-
-    const mpData = await mpResponse.json();
-    console.log('Payment status from MP:', mpData.status);
-
-    // Atualizar status no banco
-    const { error: updateError } = await supabase
+    const { data: order, error } = await supabase
       .from('orders')
-      .update({ payment_status: mpData.status })
-      .eq('payment_id', paymentId.toString());
+      .select('id, payment_status, product_name, customer_email')
+      .eq('id', orderId)
+      .single();
 
-    if (updateError) {
-      console.error('Error updating order:', updateError);
+    if (error) {
+      console.error('Error fetching order:', error);
+      return new Response(
+        JSON.stringify({ error: 'Order not found' }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
+    console.log(`Status check for order ${orderId}: ${order.payment_status}`);
+
     return new Response(
-      JSON.stringify({
-        status: mpData.status,
-        statusDetail: mpData.status_detail,
-        approved: mpData.status === 'approved'
+      JSON.stringify({ 
+        status: order.payment_status,
+        orderId: order.id,
+        productName: order.product_name,
+        customerEmail: order.customer_email
       }),
       {
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
