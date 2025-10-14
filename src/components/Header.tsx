@@ -3,6 +3,7 @@ import { Search, Menu } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useState, FormEvent } from "react";
+import logo from "@/assets/logo.png";
 
 export function Header() {
   const navigate = useNavigate();
@@ -22,7 +23,11 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-6">
           <Link to="/" className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded bg-gradient-primary" />
+            <img 
+              src={logo} 
+              alt="GameKeys Logo" 
+              className="h-10 w-10 object-contain mix-blend-multiply dark:mix-blend-screen" 
+            />
             <span className="text-xl font-bold gradient-text">GameKeys</span>
           </Link>
           
