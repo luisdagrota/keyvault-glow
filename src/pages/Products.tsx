@@ -22,12 +22,16 @@ export default function Products() {
   const searchProducts = useCallback(async (search: string, category: string) => {
     setLoading(true);
     try {
+      console.log('Searching for:', { search, category });
+      
       // Construct URL with query params
       const url = new URL(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-products`
       );
       if (search) url.searchParams.set('search', search);
       if (category !== 'all') url.searchParams.set('category', category);
+
+      console.log('Fetching from:', url.toString());
 
       const response = await fetch(url.toString(), {
         method: 'GET',
@@ -37,11 +41,16 @@ export default function Products() {
         },
       });
 
+      console.log('Response status:', response.status);
+
       if (!response.ok) {
-        throw new Error('Failed to fetch products');
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`Failed to fetch products: ${response.status}`);
       }
 
       const result = await response.json();
+      console.log('Search result:', result);
       
       if (result.products) {
         const typedProducts = result.products as Product[];
@@ -52,7 +61,9 @@ export default function Products() {
         const uniqueCategories: string[] = ["all", ...Array.from(categorySet)];
         setCategories(uniqueCategories);
       } else {
-        throw new Error('No products returned');
+        console.warn('No products in response');
+        setProducts([]);
+        setCategories(["all"]);
       }
     } catch (error) {
       console.error("Error searching products:", error);
