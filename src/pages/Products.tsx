@@ -22,11 +22,6 @@ export default function Products() {
   const searchProducts = useCallback(async (search: string, category: string) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('search-products', {
-        body: {},
-        method: 'GET',
-      });
-
       // Construct URL with query params
       const url = new URL(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-products`
@@ -35,10 +30,16 @@ export default function Products() {
       if (category !== 'all') url.searchParams.set('category', category);
 
       const response = await fetch(url.toString(), {
+        method: 'GET',
         headers: {
           'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
 
       const result = await response.json();
       
