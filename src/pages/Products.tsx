@@ -1,60 +1,82 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
 import { Product } from "@/types/product";
-import { fetchProducts } from "@/lib/googleSheets";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 
 export default function Products() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [categories, setCategories] = useState<string[]>(["all"]);
 
-  useEffect(() => {
-    loadProducts();
-  }, []);
-
-  useEffect(() => {
-    filterProducts();
-  }, [searchQuery, selectedCategory, products]);
-
-  const loadProducts = async () => {
+  // Debounced search function
+  const searchProducts = useCallback(async (search: string, category: string) => {
+    setLoading(true);
     try {
-      const data = await fetchProducts();
-      setProducts(data);
-      setFilteredProducts(data);
+      const { data, error } = await supabase.functions.invoke('search-products', {
+        body: {},
+        method: 'GET',
+      });
+
+      // Construct URL with query params
+      const url = new URL(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-products`
+      );
+      if (search) url.searchParams.set('search', search);
+      if (category !== 'all') url.searchParams.set('category', category);
+
+      const response = await fetch(url.toString(), {
+        headers: {
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+      });
+
+      const result = await response.json();
+      
+      if (result.products) {
+        const typedProducts = result.products as Product[];
+        setProducts(typedProducts);
+        
+        // Extract unique categories
+        const categorySet = new Set(typedProducts.map(p => p.category));
+        const uniqueCategories: string[] = ["all", ...Array.from(categorySet)];
+        setCategories(uniqueCategories);
+      } else {
+        throw new Error('No products returned');
+      }
     } catch (error) {
-      console.error("Error loading products:", error);
-      toast.error("Erro ao carregar produtos");
+      console.error("Error searching products:", error);
+      toast.error("Erro ao buscar produtos");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const filterProducts = () => {
-    let filtered = products;
+  // Debounce timer
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      searchProducts(searchQuery, selectedCategory);
+    }, 300);
 
-    if (selectedCategory !== "all") {
-      filtered = filtered.filter(p => p.category === selectedCategory);
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedCategory, searchProducts]);
+
+  // Initial load and handle URL search params
+  useEffect(() => {
+    const urlSearch = searchParams.get("search");
+    if (urlSearch) {
+      setSearchQuery(urlSearch);
     }
-
-    if (searchQuery) {
-      filtered = filtered.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    setFilteredProducts(filtered);
-  };
-
-  const categories = ["all", ...Array.from(new Set(products.map(p => p.category)))];
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -101,7 +123,7 @@ export default function Products() {
                 <div key={i} className="card-gaming h-80 animate-pulse" />
               ))}
             </div>
-          ) : filteredProducts.length === 0 ? (
+          ) : products.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-muted-foreground text-lg">
                 Nenhum produto encontrado
@@ -109,7 +131,7 @@ export default function Products() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => (
+              {products.map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}
