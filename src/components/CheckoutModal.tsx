@@ -357,6 +357,16 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
                 Nosso suporte responde em segundos para entregar sua compra.
               </p>
             </div>
+            <Button
+              variant="outline"
+              className="w-full mt-4"
+              onClick={() => {
+                onOpenChange(false);
+                navigate(`/pedido-concluido?id=${currentOrderId}`);
+              }}
+            >
+              Ver Status do Pedido
+            </Button>
           </div>
         )}
 
@@ -377,6 +387,16 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
                 Nosso suporte responde em segundos para entregar sua compra.
               </p>
             </div>
+            <Button
+              variant="outline"
+              className="w-full mt-4"
+              onClick={() => {
+                onOpenChange(false);
+                navigate(`/pedido-concluido?id=${currentOrderId}`);
+              }}
+            >
+              Ver Status do Pedido
+            </Button>
           </div>
         )}
       </DialogContent>
