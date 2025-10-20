@@ -4,7 +4,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CheckCircle, MessageCircle, Mail, Package } from "lucide-react";
+import { CheckCircle, MessageCircle, Mail, Package, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -159,27 +159,48 @@ export default function PedidoConcluido() {
               </div>
             </div>
 
-            {/* Entrega Imediata via Tawk.To */}
+            {/* Entrega Imediata */}
             <div className="bg-gradient-to-r from-primary/20 to-primary/10 border-2 border-primary/30 rounded-lg p-6 mb-6">
               <div className="text-center">
-                <MessageCircle className="h-12 w-12 mx-auto mb-4 text-primary" />
-                <h3 className="text-xl font-bold mb-3">Entrega Agora (Recomendado)</h3>
+                <h3 className="text-xl font-bold mb-3">Receba Agora (Recomendado)</h3>
                 <p className="text-sm mb-4">
-                  Clique no botão abaixo ou use o chat aberto e digite o ID do seu pedido para
+                  Escolha uma das opções abaixo e informe o ID do seu pedido para
                   receber sua chave na hora!
                 </p>
-                <div className="bg-background/80 rounded-lg p-3 mb-4 border border-border">
-                  <p className="text-xs text-muted-foreground mb-1">ID do Pedido para o Chat:</p>
+                <div className="bg-background/80 rounded-lg p-3 mb-6 border border-border">
+                  <p className="text-xs text-muted-foreground mb-1">ID do Pedido:</p>
                   <p className="font-mono font-bold text-lg">{order.id}</p>
                 </div>
-                <Button
-                  onClick={handleOpenChat}
-                  size="lg"
-                  className="bg-green-600 hover:bg-green-700 text-white font-bold"
-                >
-                  <MessageCircle className="h-5 w-5 mr-2" />
-                  Atendimento Imediato
-                </Button>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Chat ao Vivo */}
+                  <div className="flex flex-col items-center">
+                    <MessageCircle className="h-10 w-10 mb-3 text-primary" />
+                    <Button
+                      onClick={handleOpenChat}
+                      size="lg"
+                      className="w-full bg-green-600 hover:bg-green-700 text-white font-bold"
+                    >
+                      <MessageCircle className="h-5 w-5 mr-2" />
+                      Chat ao Vivo
+                    </Button>
+                  </div>
+
+                  {/* Discord */}
+                  <div className="flex flex-col items-center">
+                    <MessageSquare className="h-10 w-10 mb-3 text-primary" />
+                    <Button
+                      asChild
+                      size="lg"
+                      className="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold"
+                    >
+                      <a href="https://discord.gg/SMjamyEpaD" target="_blank" rel="noopener noreferrer">
+                        <MessageSquare className="h-5 w-5 mr-2" />
+                        Discord
+                      </a>
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
 
