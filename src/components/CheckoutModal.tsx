@@ -349,24 +349,27 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
             >
               Copiar Código PIX
             </Button>
-            <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+            
+            <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Loader2 className="h-5 w-5 animate-spin text-yellow-600 dark:text-yellow-400" />
+                <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
+                  Aguardando Pagamento
+                </p>
+              </div>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                Seu pagamento está sendo processado. Assim que for aprovado, você será redirecionado automaticamente.
+              </p>
+            </div>
+
+            <div className="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-lg">
               <p className="text-lg font-bold text-primary mb-2">
-                💬 Pagamento Aprovado? Clique no chat abaixo para Entrega Imediata da sua Key/Conta!
+                💬 Após aprovação, clique no chat para receber sua Key/Conta imediatamente!
               </p>
               <p className="text-sm text-muted-foreground">
                 Nosso suporte responde em segundos para entregar sua compra.
               </p>
             </div>
-            <Button
-              variant="outline"
-              className="w-full mt-4"
-              onClick={() => {
-                onOpenChange(false);
-                navigate(`/pedido-concluido?id=${currentOrderId}`);
-              }}
-            >
-              Ver Status do Pedido
-            </Button>
           </div>
         )}
 
@@ -379,24 +382,27 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
             >
               Visualizar Boleto
             </Button>
-            <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+            
+            <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Loader2 className="h-5 w-5 animate-spin text-yellow-600 dark:text-yellow-400" />
+                <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
+                  Aguardando Confirmação
+                </p>
+              </div>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                O pagamento do boleto pode levar até 3 dias úteis para ser confirmado. Assim que for aprovado, você receberá uma confirmação por e-mail e será redirecionado automaticamente.
+              </p>
+            </div>
+
+            <div className="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-lg">
               <p className="text-lg font-bold text-primary mb-2">
-                💬 Pagamento Aprovado? Clique no chat abaixo para Entrega Imediata da sua Key/Conta!
+                💬 Após aprovação, clique no chat para receber sua Key/Conta imediatamente!
               </p>
               <p className="text-sm text-muted-foreground">
                 Nosso suporte responde em segundos para entregar sua compra.
               </p>
             </div>
-            <Button
-              variant="outline"
-              className="w-full mt-4"
-              onClick={() => {
-                onOpenChange(false);
-                navigate(`/pedido-concluido?id=${currentOrderId}`);
-              }}
-            >
-              Ver Status do Pedido
-            </Button>
           </div>
         )}
       </DialogContent>
