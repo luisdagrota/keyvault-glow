@@ -13,11 +13,11 @@ serve(async (req) => {
 
   try {
     const webhookData = await req.json();
-    console.log('Webhook received from Mercado Pago:', webhookData);
+    console.log('📥 Webhook received from Mercado Pago:', JSON.stringify(webhookData));
 
     // Mercado Pago envia notificações com type "payment"
     if (webhookData.type !== 'payment') {
-      console.log('Ignored webhook type:', webhookData.type);
+      console.log('⏭️  Ignored webhook type:', webhookData.type);
       return new Response(JSON.stringify({ received: true }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -26,12 +26,14 @@ serve(async (req) => {
 
     const paymentId = webhookData.data?.id;
     if (!paymentId) {
-      console.error('No payment ID in webhook data');
+      console.error('❌ No payment ID in webhook data');
       return new Response(JSON.stringify({ error: 'No payment ID' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+
+    console.log('🔍 Processing payment ID:', paymentId);
 
     const accessToken = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN');
     if (!accessToken) {
@@ -63,10 +65,11 @@ serve(async (req) => {
     }
 
     const paymentData = await mpResponse.json();
-    console.log('Payment status from Mercado Pago:', {
+    console.log('✅ Payment data retrieved from Mercado Pago:', {
       id: paymentData.id,
       status: paymentData.status,
-      status_detail: paymentData.status_detail
+      status_detail: paymentData.status_detail,
+      payer_email: paymentData.payer?.email
     });
 
     // Atualizar status no banco de dados
@@ -81,13 +84,21 @@ serve(async (req) => {
       .maybeSingle();
 
     if (selectError || !order) {
-      console.error('Error finding order or order not found:', selectError);
+      console.error('❌ Error finding order or order not found:', selectError);
       // Retorna 200 mesmo assim para não reprocessar webhook
       return new Response(JSON.stringify({ received: true, note: 'Order not found' }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+
+    console.log('📦 Order found:', {
+      orderId: order.id,
+      currentStatus: order.payment_status,
+      newStatus: paymentData.status,
+      customerEmail: order.customer_email,
+      userId: order.user_id
+    });
 
     // Atualizar status do pedido
     const { error: updateError } = await supabase
@@ -96,16 +107,30 @@ serve(async (req) => {
       .eq('payment_id', paymentId.toString());
 
     if (updateError) {
-      console.error('Error updating order:', updateError);
+      console.error('❌ Error updating order:', updateError);
     } else {
-      console.log('Order updated successfully:', order.id);
+      console.log('✅ Order updated successfully:', {
+        orderId: order.id,
+        oldStatus: order.payment_status,
+        newStatus: paymentData.status
+      });
     }
 
-    // TODO: Aqui você pode adicionar lógica para enviar e-mail com a key/credencial
-    // quando paymentData.status === 'approved'
+    // Enviar notificação quando o pagamento for aprovado
     if (paymentData.status === 'approved') {
-      console.log('Payment approved - should send delivery email to:', order.customer_email);
-      // Implementar envio de e-mail com Resend ou outro serviço
+      console.log('🎉 Payment APPROVED! Order:', order.id);
+      console.log('📧 Should send delivery email to:', order.customer_email);
+      
+      if (order.user_id) {
+        console.log('👤 Order is linked to user:', order.user_id);
+      }
+      
+      // TODO: Implementar envio de e-mail com Resend ou outro serviço
+      // Exemplo: await sendDeliveryEmail(order.customer_email, order.product_name);
+    } else if (paymentData.status === 'rejected') {
+      console.log('❌ Payment REJECTED! Order:', order.id);
+    } else if (paymentData.status === 'pending' || paymentData.status === 'in_process') {
+      console.log('⏳ Payment still PENDING/IN_PROCESS! Order:', order.id);
     }
 
     return new Response(
