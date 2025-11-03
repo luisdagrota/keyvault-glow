@@ -1,16 +1,31 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Menu } from "lucide-react";
+import { Search, Menu, User } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useState, FormEvent, useRef, useEffect } from "react";
 import logo from "@/assets/logo.png";
 import { SearchPreview } from "./SearchPreview";
+import { supabase } from "@/integrations/supabase/client";
+import { User as SupabaseUser } from "@supabase/supabase-js";
 
 export function Header() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
@@ -85,6 +100,17 @@ export function Header() {
               onClose={() => setIsPreviewOpen(false)}
             />
           </div>
+
+          {user ? (
+            <Button variant="ghost" size="sm" onClick={() => navigate("/profile")}>
+              <User className="h-4 w-4 mr-2" />
+              Perfil
+            </Button>
+          ) : (
+            <Button variant="default" size="sm" onClick={() => navigate("/auth")}>
+              Entrar
+            </Button>
+          )}
 
           <Button variant="ghost" size="icon" className="md:hidden">
             <Menu className="h-5 w-5" />

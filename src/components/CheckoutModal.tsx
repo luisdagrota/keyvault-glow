@@ -9,6 +9,7 @@ import { Product } from "@/types/product";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CreditCard, QrCode, Receipt, Loader2 } from "lucide-react";
+import { User } from "@supabase/supabase-js";
 
 interface CheckoutModalProps {
   product: Product;
@@ -20,10 +21,43 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
   const navigate = useNavigate();
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'credit_card' | 'ticket'>('pix');
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerName, setCustomerName] = useState('');
+
+  // Verificar se o usuário está logado e preencher dados
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        onOpenChange(false);
+        toast.error('Você precisa fazer login para continuar');
+        navigate('/auth');
+        return;
+      }
+
+      setUser(session.user);
+      setCustomerEmail(session.user.email || '');
+
+      // Buscar nome do perfil
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profileData) {
+        setCustomerName(profileData.full_name);
+      }
+    };
+
+    if (open) {
+      checkUser();
+    }
+  }, [open, onOpenChange, navigate]);
   
   // Dados do cartão
   const [cardNumber, setCardNumber] = useState('');
@@ -63,6 +97,7 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
           customerEmail,
           customerName,
           paymentMethod,
+          userId: user?.id,
           ...(paymentMethod === 'credit_card' && {
             cardData: {
               cardNumber,
