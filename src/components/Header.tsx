@@ -37,18 +37,21 @@ export function Header() {
 
     checkUserAndRole();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        const { data: roles } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .eq('role', 'admin')
-          .maybeSingle();
-        
-        setIsAdmin(!!roles);
+        setTimeout(() => {
+          supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', session.user.id)
+            .eq('role', 'admin')
+            .maybeSingle()
+            .then(({ data: roles }) => {
+              setIsAdmin(!!roles);
+            });
+        }, 0);
       } else {
         setIsAdmin(false);
       }
