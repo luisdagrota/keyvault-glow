@@ -69,14 +69,33 @@ const Admin = () => {
 
   const checkAdminAccess = async () => {
     try {
+      console.log('🔐 Admin: Verificando acesso...');
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
+        console.log('❌ Admin: Nenhuma sessão encontrada');
         toast.error("Acesso negado", { description: "Você precisa estar logado" });
         navigate("/auth");
         return;
       }
 
+      console.log('✅ Admin: Sessão encontrada:', {
+        email: session.user.email,
+        id: session.user.id
+      });
+
+      const ADMIN_EMAIL = "luisdagrota20@gmail.com";
+
+      // 1) Verificação prioritária por e-mail
+      if (session.user.email === ADMIN_EMAIL) {
+        console.log('✅ Admin: Email autorizado:', ADMIN_EMAIL);
+        setIsAdmin(true);
+        loadData();
+        return;
+      }
+
+      // 2) Fallback: verificar role no banco
+      console.log('🔍 Admin: Verificando role na tabela user_roles...');
       const { data: roles, error } = await supabase
         .from("user_roles")
         .select("role")
@@ -84,16 +103,21 @@ const Admin = () => {
         .eq("role", "admin")
         .maybeSingle();
 
+      console.log('📊 Admin: Resultado da query:', { roles, error });
+
       if (error || !roles) {
+        console.log('❌ Admin: Acesso negado - sem role admin');
         toast.error("Acesso negado", { description: "Você não tem permissão para acessar esta página" });
         navigate("/");
         return;
       }
 
+      console.log('✅ Admin: Role admin encontrada');
       setIsAdmin(true);
       loadData();
     } catch (error) {
-      console.error("Error checking admin access:", error);
+      console.error("❌ Admin: Erro ao verificar acesso:", error);
+      toast.error("Erro ao verificar permissões");
       navigate("/");
     } finally {
       setLoading(false);
