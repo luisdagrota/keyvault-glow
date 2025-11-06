@@ -14,50 +14,83 @@ export function Header() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [loadingAdmin, setLoadingAdmin] = useState(true);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const checkUserAndRole = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
+  const ADMIN_EMAIL = "luisdagrota20@gmail.com";
 
-      if (session?.user) {
-        const { data: roles } = await supabase
+  useEffect(() => {
+    let mounted = true;
+
+    const checkUserAndRole = async (session?: any) => {
+      try {
+        setLoadingAdmin(true);
+        const sessionToUse = session ?? (await supabase.auth.getSession()).data.session;
+        const currentUser = sessionToUse?.user ?? null;
+
+        if (!mounted) return;
+
+        setUser(currentUser);
+        
+        if (!currentUser) {
+          console.log('❌ Nenhum usuário logado');
+          setIsAdmin(false);
+          return;
+        }
+
+        console.log('✅ Usuário logado:', {
+          email: currentUser.email,
+          id: currentUser.id,
+          emailVerified: currentUser.email_confirmed_at
+        });
+
+        // 1) Verificação direta pelo e-mail (prioritária)
+        if (currentUser.email === ADMIN_EMAIL) {
+          console.log('✅ Email coincide com admin:', ADMIN_EMAIL);
+          setIsAdmin(true);
+          return;
+        }
+
+        // 2) Verificar roles no DB (fallback)
+        console.log('🔍 Verificando role na tabela user_roles...');
+        const { data: roleRow, error } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', session.user.id)
+          .eq('user_id', currentUser.id)
           .eq('role', 'admin')
           .maybeSingle();
-        
-        setIsAdmin(!!roles);
-      } else {
+
+        console.log('📊 Resultado da query user_roles:', { roleRow, error });
+
+        if (error) {
+          console.error('❌ Erro ao buscar role:', error);
+          setIsAdmin(false);
+        } else {
+          const hasAdminRole = !!roleRow;
+          console.log(hasAdminRole ? '✅ Usuário tem role admin' : '❌ Usuário não tem role admin');
+          setIsAdmin(hasAdminRole);
+        }
+      } catch (err) {
+        console.error('❌ Erro em checkUserAndRole:', err);
         setIsAdmin(false);
+      } finally {
+        if (mounted) setLoadingAdmin(false);
       }
     };
 
+    // Verificação inicial
     checkUserAndRole();
 
+    // Inscrever-se às mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        setTimeout(() => {
-          supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', session.user.id)
-            .eq('role', 'admin')
-            .maybeSingle()
-            .then(({ data: roles }) => {
-              setIsAdmin(!!roles);
-            });
-        }, 0);
-      } else {
-        setIsAdmin(false);
-      }
+      console.log('🔄 Auth state changed:', event);
+      checkUserAndRole(session);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleSearch = (e: FormEvent) => {
