@@ -182,6 +182,62 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
     });
   };
 
+  const [order, setOrder] = useState<any>(null);
+
+  useEffect(() => {
+    const loadOrder = async () => {
+      const { data } = await supabase
+        .from('orders')
+        .select('payment_status')
+        .eq('id', orderId)
+        .single();
+      
+      setOrder(data);
+    };
+
+    loadOrder();
+
+    const channel = supabase
+      .channel(`order-${orderId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `id=eq.${orderId}`
+        },
+        (payload) => {
+          setOrder(payload.new);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [orderId]);
+
+  const isDelivered = order?.payment_status === 'delivered';
+
+  if (isDelivered && !isAdmin) {
+    return (
+      <Card className="card-gaming flex flex-col h-[600px]">
+        <CardContent className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <div className="h-16 w-16 rounded-full bg-success/10 flex items-center justify-center mx-auto">
+              <Package className="h-8 w-8 text-success" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold mb-2">✅ Seu pedido foi concluído com sucesso!</h3>
+              <p className="text-muted-foreground">Obrigado por comprar conosco.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="card-gaming flex flex-col h-[600px]">
       <CardHeader className="border-b border-border">

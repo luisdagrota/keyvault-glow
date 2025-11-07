@@ -7,8 +7,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Loader2, Package, User as UserIcon } from "lucide-react";
+import { Loader2, Package, User as UserIcon, MessageSquare, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ChatWindow } from "@/components/chat/ChatWindow";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Profile {
   full_name: string;
@@ -21,6 +29,11 @@ interface Order {
   payment_status: string;
   payment_method: string;
   created_at: string;
+  customer_name: string | null;
+  chat_status?: {
+    unread_customer_count: number;
+    is_archived: boolean;
+  };
 }
 
 const Profile = () => {
@@ -28,6 +41,7 @@ const Profile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -75,7 +89,10 @@ const Profile = () => {
   const fetchOrders = async (userId: string) => {
     const { data, error } = await supabase
       .from("orders")
-      .select("id, product_name, transaction_amount, payment_status, payment_method, created_at")
+      .select(`
+        *,
+        chat_status:order_chat_status(unread_customer_count, is_archived)
+      `)
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
@@ -84,7 +101,39 @@ const Profile = () => {
       return;
     }
 
-    setOrders(data || []);
+    setOrders(data as any || []);
+
+    // Subscribe to updates
+    const channel = supabase
+      .channel('profile-orders')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `user_id=eq.${userId}`
+        },
+        () => {
+          fetchOrders(userId);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'order_chat_status'
+        },
+        () => {
+          fetchOrders(userId);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   };
 
   const handleLogout = async () => {
@@ -111,11 +160,23 @@ const Profile = () => {
       approved: { label: "Aprovado", variant: "default" },
       pending: { label: "Pendente", variant: "secondary" },
       rejected: { label: "Rejeitado", variant: "destructive" },
+      delivered: { label: "Entregue", variant: "default" },
+      cancelled: { label: "Cancelado", variant: "destructive" },
+      refunded: { label: "Reembolsado", variant: "outline" }
     };
 
     const config = statusConfig[status] || { label: status, variant: "outline" };
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
+
+  const activeOrders = orders.filter(order => 
+    order.payment_status !== 'delivered' &&
+    !order.chat_status?.[0]?.is_archived
+  );
+
+  const totalUnread = activeOrders.reduce((sum, order) => {
+    return sum + (order.chat_status?.[0]?.unread_customer_count || 0);
+  }, 0);
 
   if (loading) {
     return (
@@ -153,14 +214,87 @@ const Profile = () => {
             </CardHeader>
           </Card>
 
+          {totalUnread > 0 && (
+            <Card className="border-primary/50">
+              <CardContent className="flex items-center gap-3 p-4">
+                <MessageSquare className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-medium">Você tem {totalUnread} mensagem(ns) não lida(s)</p>
+                  <p className="text-sm text-muted-foreground">Clique em "Abrir Chat" para responder</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {activeOrders.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5" />
+                  <CardTitle>Chats Ativos</CardTitle>
+                </div>
+                <CardDescription>
+                  Converse com nossa equipe sobre seus pedidos
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {activeOrders.map((order) => {
+                    const unreadCount = order.chat_status?.[0]?.unread_customer_count || 0;
+                    
+                    return (
+                      <div
+                        key={order.id}
+                        className="border rounded-lg p-4 hover:bg-accent/50 transition-colors"
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <h3 className="font-semibold flex items-center gap-2">
+                              <Package className="h-4 w-4" />
+                              {order.product_name}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              Pedido #{order.id.slice(0, 8)}
+                            </p>
+                          </div>
+                          {getStatusBadge(order.payment_status)}
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(order.created_at).toLocaleDateString("pt-BR")}
+                          </p>
+                          <Button
+                            onClick={() => setSelectedOrder(order)}
+                            variant={unreadCount > 0 ? "default" : "outline"}
+                            size="sm"
+                            className="gap-2"
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                            Abrir Chat
+                            {unreadCount > 0 && (
+                              <Badge variant="destructive" className="ml-1">
+                                {unreadCount}
+                              </Badge>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Package className="h-5 w-5" />
-                <CardTitle>Meus Pedidos</CardTitle>
+                <CardTitle>Histórico de Pedidos</CardTitle>
               </div>
               <CardDescription>
-                Histórico completo de suas compras
+                Todos os seus pedidos anteriores
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -170,34 +304,46 @@ const Profile = () => {
                 </p>
               ) : (
                 <div className="space-y-4">
-                  {orders.map((order) => (
-                    <div
-                      key={order.id}
-                      className="border rounded-lg p-4 hover:bg-accent/50 transition-colors"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="font-semibold">{order.product_name}</h3>
+                  {orders.map((order) => {
+                    const isDelivered = order.payment_status === 'delivered';
+                    
+                    return (
+                      <div
+                        key={order.id}
+                        className="border rounded-lg p-4 hover:bg-accent/50 transition-colors"
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h3 className="font-semibold">{order.product_name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(order.created_at).toLocaleDateString("pt-BR", {
+                                day: "2-digit",
+                                month: "long",
+                                year: "numeric",
+                              })}
+                            </p>
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            {getStatusBadge(order.payment_status)}
+                            {isDelivered && (
+                              <div className="flex items-center gap-1 text-sm text-success">
+                                <CheckCircle2 className="h-4 w-4" />
+                                <span>Concluído</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center">
                           <p className="text-sm text-muted-foreground">
-                            {new Date(order.created_at).toLocaleDateString("pt-BR", {
-                              day: "2-digit",
-                              month: "long",
-                              year: "numeric",
-                            })}
+                            {order.payment_method === "pix" ? "PIX" : "Boleto"}
+                          </p>
+                          <p className="font-bold text-primary">
+                            R$ {order.transaction_amount.toFixed(2)}
                           </p>
                         </div>
-                        {getStatusBadge(order.payment_status)}
                       </div>
-                      <div className="flex justify-between items-center">
-                        <p className="text-sm text-muted-foreground">
-                          {order.payment_method === "pix" ? "PIX" : "Boleto"}
-                        </p>
-                        <p className="font-bold text-primary">
-                          R$ {order.transaction_amount.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
@@ -205,6 +351,28 @@ const Profile = () => {
         </div>
       </main>
       <Footer />
+
+      <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+          <DialogHeader className="p-6 pb-0">
+            <DialogTitle>Chat do Pedido</DialogTitle>
+            <DialogDescription>
+              Converse com nossa equipe sobre seu pedido
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedOrder && (
+            <div className="p-6 pt-0">
+              <ChatWindow
+                orderId={selectedOrder.id}
+                orderNumber={selectedOrder.id.slice(0, 8)}
+                customerName={selectedOrder.customer_name || user?.email || "Cliente"}
+                isAdmin={false}
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
