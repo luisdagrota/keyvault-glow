@@ -14,6 +14,88 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_messages: {
+        Row: {
+          attachment_name: string | null
+          attachment_url: string | null
+          created_at: string
+          id: string
+          message: string | null
+          order_id: string
+          read_at: string | null
+          sender_id: string
+          sender_type: string
+        }
+        Insert: {
+          attachment_name?: string | null
+          attachment_url?: string | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          order_id: string
+          read_at?: string | null
+          sender_id: string
+          sender_type: string
+        }
+        Update: {
+          attachment_name?: string | null
+          attachment_url?: string | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          order_id?: string
+          read_at?: string | null
+          sender_id?: string
+          sender_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_chat_status: {
+        Row: {
+          created_at: string
+          id: string
+          is_archived: boolean
+          last_message_at: string | null
+          order_id: string
+          unread_admin_count: number
+          unread_customer_count: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          last_message_at?: string | null
+          order_id: string
+          unread_admin_count?: number
+          unread_customer_count?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          last_message_at?: string | null
+          order_id?: string
+          unread_admin_count?: number
+          unread_customer_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_chat_status_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           created_at: string
