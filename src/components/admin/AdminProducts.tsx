@@ -68,7 +68,9 @@ export function AdminProducts({ products, onProductsChange }: AdminProductsProps
         return;
       }
 
-      toast.success("Produto atualizado com sucesso!");
+      toast.success("Produto atualizado com sucesso!", {
+        description: "As alterações já estão visíveis no site"
+      });
     } else {
       const { error } = await supabase
         .from("products")
@@ -79,7 +81,9 @@ export function AdminProducts({ products, onProductsChange }: AdminProductsProps
         return;
       }
 
-      toast.success("Produto criado com sucesso!");
+      toast.success("✅ Produto adicionado com sucesso e publicado no site", {
+        description: "O produto já está disponível para seus clientes"
+      });
     }
 
     setIsProductDialogOpen(false);

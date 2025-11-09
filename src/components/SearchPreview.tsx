@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Product } from "@/types/product";
 import { fetchProducts } from "@/lib/googleSheets";
+import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
 interface SearchPreviewProps {
@@ -28,6 +29,26 @@ export function SearchPreview({ searchTerm, isOpen, onClose }: SearchPreviewProp
     };
 
     loadProducts();
+
+    // Subscribe to realtime product changes
+    const channel = supabase
+      .channel('search-products-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'products'
+        },
+        () => {
+          loadProducts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   useEffect(() => {

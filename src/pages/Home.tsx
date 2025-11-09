@@ -7,6 +7,7 @@ import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
 import { Product } from "@/types/product";
 import { fetchProducts } from "@/lib/googleSheets";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export default function Home() {
@@ -15,6 +16,27 @@ export default function Home() {
 
   useEffect(() => {
     loadProducts();
+
+    // Subscribe to realtime product changes
+    const channel = supabase
+      .channel('products-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'products'
+        },
+        () => {
+          console.log('Product changed, reloading...');
+          loadProducts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const loadProducts = async () => {

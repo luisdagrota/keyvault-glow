@@ -18,53 +18,45 @@ export default function Products() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [categories, setCategories] = useState<string[]>(["all"]);
 
-  // Debounced search function
+  // Search products directly from Supabase
   const searchProducts = useCallback(async (search: string, category: string) => {
     setLoading(true);
     try {
-      console.log('Searching for:', { search, category });
-      
-      // Construct URL with query params
-      const url = new URL(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-products`
-      );
-      if (search) url.searchParams.set('search', search);
-      if (category !== 'all') url.searchParams.set('category', category);
+      let query = supabase
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-      console.log('Fetching from:', url.toString());
-
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-      });
-
-      console.log('Response status:', response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-        throw new Error(`Failed to fetch products: ${response.status}`);
+      // Apply search filter
+      if (search) {
+        query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%,category.ilike.%${search}%`);
       }
 
-      const result = await response.json();
-      console.log('Search result:', result);
-      
-      if (result.products) {
-        const typedProducts = result.products as Product[];
-        setProducts(typedProducts);
-        
-        // Extract unique categories
-        const categorySet = new Set(typedProducts.map(p => p.category));
-        const uniqueCategories: string[] = ["all", ...Array.from(categorySet)];
-        setCategories(uniqueCategories);
-      } else {
-        console.warn('No products in response');
-        setProducts([]);
-        setCategories(["all"]);
+      // Apply category filter
+      if (category !== 'all') {
+        query = query.eq('category', category);
       }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      const typedProducts: Product[] = (data || []).map((product) => ({
+        id: product.id,
+        name: product.name,
+        description: product.description || "",
+        price: Number(product.price),
+        category: product.category || "",
+        stock: product.stock,
+        imageUrl: product.image_url || "",
+      }));
+
+      setProducts(typedProducts);
+
+      // Extract unique categories
+      const categorySet = new Set(typedProducts.map(p => p.category).filter(Boolean));
+      const uniqueCategories: string[] = ["all", ...Array.from(categorySet)];
+      setCategories(uniqueCategories);
     } catch (error) {
       console.error("Error searching products:", error);
       toast.error("Erro ao buscar produtos");
@@ -88,7 +80,28 @@ export default function Products() {
     if (urlSearch) {
       setSearchQuery(urlSearch);
     }
-  }, [searchParams]);
+
+    // Subscribe to realtime product changes
+    const channel = supabase
+      .channel('products-page-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'products'
+        },
+        () => {
+          console.log('Product changed, reloading...');
+          searchProducts(searchQuery, selectedCategory);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [searchParams, searchQuery, selectedCategory, searchProducts]);
 
   return (
     <div className="min-h-screen flex flex-col">
