@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
 import { Product } from "@/types/product";
+import { fetchProducts } from "@/lib/googleSheets";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -13,73 +14,68 @@ import { Search } from "lucide-react";
 export default function Products() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [categories, setCategories] = useState<string[]>(["all"]);
 
-  // Search products directly from Supabase
-  const searchProducts = useCallback(async (search: string, category: string) => {
+  // Load all products from both sources
+  const loadAllProducts = useCallback(async () => {
     setLoading(true);
     try {
-      let query = supabase
-        .from("products")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      // Apply search filter
-      if (search) {
-        query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%,category.ilike.%${search}%`);
-      }
-
-      // Apply category filter
-      if (category !== 'all') {
-        query = query.eq('category', category);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      const typedProducts: Product[] = (data || []).map((product) => ({
-        id: product.id,
-        name: product.name,
-        description: product.description || "",
-        price: Number(product.price),
-        category: product.category || "",
-        stock: product.stock,
-        imageUrl: product.image_url || "",
-      }));
-
-      setProducts(typedProducts);
-
+      const data = await fetchProducts();
+      setAllProducts(data);
+      
       // Extract unique categories
-      const categorySet = new Set(typedProducts.map(p => p.category).filter(Boolean));
+      const categorySet = new Set(data.map(p => p.category).filter(Boolean));
       const uniqueCategories: string[] = ["all", ...Array.from(categorySet)];
       setCategories(uniqueCategories);
     } catch (error) {
-      console.error("Error searching products:", error);
-      toast.error("Erro ao buscar produtos");
+      console.error("Error loading products:", error);
+      toast.error("Erro ao carregar produtos");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Debounce timer
+  // Filter products locally
+  const filterProducts = useCallback((search: string, category: string) => {
+    let filtered = allProducts;
+
+    // Apply search filter
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filtered = filtered.filter((product) => 
+        product.name.toLowerCase().includes(searchLower) ||
+        product.description.toLowerCase().includes(searchLower) ||
+        product.category.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply category filter
+    if (category !== 'all') {
+      filtered = filtered.filter((product) => product.category === category);
+    }
+
+    setProducts(filtered);
+  }, [allProducts]);
+
+  // Apply filters when search or category changes
   useEffect(() => {
-    const timer = setTimeout(() => {
-      searchProducts(searchQuery, selectedCategory);
-    }, 300);
+    if (allProducts.length > 0) {
+      filterProducts(searchQuery, selectedCategory);
+    }
+  }, [searchQuery, selectedCategory, allProducts, filterProducts]);
 
-    return () => clearTimeout(timer);
-  }, [searchQuery, selectedCategory, searchProducts]);
-
-  // Initial load and handle URL search params
+  // Initial load and handle URL search params + realtime updates
   useEffect(() => {
     const urlSearch = searchParams.get("search");
     if (urlSearch) {
       setSearchQuery(urlSearch);
     }
+
+    loadAllProducts();
 
     // Subscribe to realtime product changes
     const channel = supabase
@@ -93,7 +89,7 @@ export default function Products() {
         },
         () => {
           console.log('Product changed, reloading...');
-          searchProducts(searchQuery, selectedCategory);
+          loadAllProducts();
         }
       )
       .subscribe();
@@ -101,7 +97,7 @@ export default function Products() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [searchParams, searchQuery, selectedCategory, searchProducts]);
+  }, [searchParams, loadAllProducts]);
 
   return (
     <div className="min-h-screen flex flex-col">
