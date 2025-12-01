@@ -68,8 +68,8 @@ export function AdminProducts({ products, onProductsChange }: AdminProductsProps
         return;
       }
 
-      toast.success("Produto atualizado com sucesso!", {
-        description: "As alterações já estão visíveis no site"
+      toast.success("✅ Produto atualizado com sucesso!", {
+        description: "As alterações já estão visíveis no site em tempo real"
       });
     } else {
       const { error } = await supabase
@@ -118,7 +118,9 @@ export function AdminProducts({ products, onProductsChange }: AdminProductsProps
       return;
     }
 
-    toast.success("Produto excluído com sucesso!");
+    toast.success("✅ Produto excluído com sucesso!", {
+      description: "O produto foi removido do catálogo automaticamente"
+    });
     onProductsChange();
   };
 
@@ -145,8 +147,14 @@ export function AdminProducts({ products, onProductsChange }: AdminProductsProps
 
       <Card className="card-gaming">
         <CardHeader>
-          <CardTitle>Produtos Cadastrados</CardTitle>
-          <CardDescription>Total: {products.length} produto(s)</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            Produtos Cadastrados
+            <Badge variant="outline" className="ml-2 gap-1">
+              <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
+              Atualização automática
+            </Badge>
+          </CardTitle>
+          <CardDescription>Total: {products.length} produto(s) • As mudanças aparecem instantaneamente no site</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="mb-4">
