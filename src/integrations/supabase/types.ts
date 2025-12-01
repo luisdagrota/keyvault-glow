@@ -58,6 +58,42 @@ export type Database = {
           },
         ]
       }
+      coupons: {
+        Row: {
+          code: string
+          created_at: string
+          discount_percentage: number
+          id: string
+          is_active: boolean
+          times_used: number
+          updated_at: string
+          usage_limit: number | null
+          valid_until: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          discount_percentage: number
+          id?: string
+          is_active?: boolean
+          times_used?: number
+          updated_at?: string
+          usage_limit?: number | null
+          valid_until?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          discount_percentage?: number
+          id?: string
+          is_active?: boolean
+          times_used?: number
+          updated_at?: string
+          usage_limit?: number | null
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       order_chat_status: {
         Row: {
           created_at: string
@@ -98,9 +134,11 @@ export type Database = {
       }
       orders: {
         Row: {
+          coupon_code: string | null
           created_at: string
           customer_email: string
           customer_name: string | null
+          discount_amount: number | null
           id: string
           payment_id: string | null
           payment_method: string
@@ -116,9 +154,11 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          coupon_code?: string | null
           created_at?: string
           customer_email: string
           customer_name?: string | null
+          discount_amount?: number | null
           id?: string
           payment_id?: string | null
           payment_method: string
@@ -134,9 +174,11 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          coupon_code?: string | null
           created_at?: string
           customer_email?: string
           customer_name?: string | null
+          discount_amount?: number | null
           id?: string
           payment_id?: string | null
           payment_method?: string
