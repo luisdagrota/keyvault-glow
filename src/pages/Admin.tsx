@@ -11,6 +11,8 @@ import { AdminOrders } from "@/components/admin/AdminOrders";
 import { AdminReports } from "@/components/admin/AdminReports";
 import { AdminNotifications } from "@/components/admin/AdminNotifications";
 import { AdminChats } from "@/components/admin/AdminChats";
+import { AdminCoupons } from "@/components/admin/AdminCoupons";
+import { AdminReviews } from "@/components/admin/AdminReviews";
 
 interface Product {
   id: string;
@@ -202,6 +204,8 @@ const Admin = () => {
                   onOrdersChange={loadOrders} 
                 />
               } />
+              <Route path="coupons" element={<AdminCoupons />} />
+              <Route path="reviews" element={<AdminReviews />} />
               <Route path="chats" element={<AdminChats />} />
               <Route path="reports" element={
                 <AdminReports 

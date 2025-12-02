@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Product } from "@/types/product";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { CreditCard, QrCode, Receipt, Loader2 } from "lucide-react";
+import { CreditCard, QrCode, Receipt, Loader2, Ticket, Check, X } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 
 interface CheckoutModalProps {
@@ -26,6 +26,15 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'credit_card' | 'ticket'>('pix');
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerName, setCustomerName] = useState('');
+
+  // Cupom de desconto
+  const [couponCode, setCouponCode] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discount_percentage: number;
+  } | null>(null);
+  const [couponError, setCouponError] = useState('');
 
   // Verificar se o usuário está logado e preencher dados
   useEffect(() => {
@@ -56,6 +65,10 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
 
     if (open) {
       checkUser();
+      // Reset coupon when modal opens
+      setAppliedCoupon(null);
+      setCouponCode('');
+      setCouponError('');
     }
   }, [open, onOpenChange, navigate]);
   
@@ -75,6 +88,68 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
   const [paymentId, setPaymentId] = useState('');
   const [currentOrderId, setCurrentOrderId] = useState('');
 
+  // Calcular preços
+  const discountAmount = appliedCoupon 
+    ? (product.price * appliedCoupon.discount_percentage) / 100 
+    : 0;
+  const finalPrice = product.price - discountAmount;
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError('Digite um código de cupom');
+      return;
+    }
+
+    setCouponLoading(true);
+    setCouponError('');
+
+    try {
+      const { data, error } = await supabase
+        .from('coupons')
+        .select('code, discount_percentage, valid_until, is_active, usage_limit, times_used')
+        .eq('code', couponCode.toUpperCase().trim())
+        .eq('is_active', true)
+        .single();
+
+      if (error || !data) {
+        setCouponError('Cupom inválido ou não encontrado');
+        setAppliedCoupon(null);
+        return;
+      }
+
+      // Verificar validade
+      if (data.valid_until && new Date(data.valid_until) < new Date()) {
+        setCouponError('Este cupom expirou');
+        setAppliedCoupon(null);
+        return;
+      }
+
+      // Verificar limite de uso
+      if (data.usage_limit && data.times_used >= data.usage_limit) {
+        setCouponError('Este cupom atingiu o limite de uso');
+        setAppliedCoupon(null);
+        return;
+      }
+
+      setAppliedCoupon({
+        code: data.code,
+        discount_percentage: data.discount_percentage
+      });
+      toast.success(`Cupom aplicado! ${data.discount_percentage}% de desconto`);
+    } catch (error) {
+      setCouponError('Erro ao verificar cupom');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    setCouponError('');
+    toast.info('Cupom removido');
+  };
+
   const handleCheckout = async () => {
     if (!customerEmail || !customerName) {
       toast.error('Preencha todos os campos obrigatórios');
@@ -93,11 +168,13 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
         body: {
           productId: product.id,
           productName: product.name,
-          productPrice: product.price,
+          productPrice: finalPrice,
           customerEmail,
           customerName,
           paymentMethod,
           userId: user?.id,
+          couponCode: appliedCoupon?.code || null,
+          discountAmount: discountAmount,
           ...(paymentMethod === 'credit_card' && {
             cardData: {
               cardNumber,
@@ -116,6 +193,22 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
       if (error) throw error;
 
       if (data.success) {
+        // Atualizar uso do cupom
+        if (appliedCoupon) {
+          const { data: couponData } = await supabase
+            .from('coupons')
+            .select('times_used')
+            .eq('code', appliedCoupon.code)
+            .single();
+          
+          if (couponData) {
+            await supabase
+              .from('coupons')
+              .update({ times_used: couponData.times_used + 1 })
+              .eq('code', appliedCoupon.code);
+          }
+        }
+
         setPaymentId(data.paymentId);
         setCurrentOrderId(data.orderId);
         
@@ -123,7 +216,6 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
           setPixQrCode(data.pixQrCode);
           setPixQrCodeBase64(data.pixQrCodeBase64);
           toast.success('PIX gerado! Escaneie o QR Code para pagar');
-          // Iniciar polling para PIX
           startPaymentPolling(data.orderId);
         } else if (paymentMethod === 'ticket') {
           setTicketUrl(data.ticketUrl);
@@ -131,11 +223,9 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
           if (data.ticketUrl) {
             window.open(data.ticketUrl, '_blank');
           }
-          // Iniciar polling para Boleto
           startPaymentPolling(data.orderId);
         } else if (data.status === 'approved') {
           toast.success('Pagamento aprovado!');
-          // Redirecionar para página de sucesso
           onOpenChange(false);
           navigate(`/pedido-concluido?id=${data.orderId}`);
         } else {
@@ -151,12 +241,10 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
   };
 
   const startPaymentPolling = (orderId: string) => {
-    // Limpar qualquer polling anterior
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current);
     }
 
-    // Verificar status a cada 5 segundos
     pollingIntervalRef.current = setInterval(async () => {
       try {
         const { data, error } = await supabase.functions.invoke('check-payment-status', {
@@ -171,7 +259,6 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
         console.log('Status do pagamento:', data.status);
 
         if (data.status === 'approved') {
-          // Pagamento aprovado - parar polling e redirecionar
           if (pollingIntervalRef.current) {
             clearInterval(pollingIntervalRef.current);
             pollingIntervalRef.current = null;
@@ -179,7 +266,6 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
 
           toast.success('🎉 Pagamento Aprovado!');
           
-          // Abrir chat Tawk.to
           if (typeof window !== 'undefined' && (window as any).Tawk_API) {
             (window as any).Tawk_API.maximize();
           }
@@ -192,10 +278,9 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
       } catch (error) {
         console.error('Erro no polling:', error);
       }
-    }, 5000); // Verificar a cada 5 segundos
+    }, 5000);
   };
 
-  // Cleanup ao desmontar componente
   useEffect(() => {
     return () => {
       if (pollingIntervalRef.current) {
@@ -209,7 +294,17 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">Checkout - {product.name}</DialogTitle>
-          <p className="text-2xl font-bold text-primary mt-2">R$ {product.price.toFixed(2)}</p>
+          <div className="space-y-1">
+            {appliedCoupon ? (
+              <>
+                <p className="text-lg text-muted-foreground line-through">R$ {product.price.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-success">R$ {finalPrice.toFixed(2)}</p>
+                <p className="text-sm text-success">Desconto de {appliedCoupon.discount_percentage}% aplicado!</p>
+              </>
+            ) : (
+              <p className="text-2xl font-bold text-primary">R$ {product.price.toFixed(2)}</p>
+            )}
+          </div>
         </DialogHeader>
 
         {!pixQrCode && !ticketUrl && (
@@ -234,6 +329,49 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
                   placeholder="seu@email.com"
                 />
               </div>
+            </div>
+
+            {/* Cupom de desconto */}
+            <div className="p-4 rounded-lg bg-muted/50 border border-border">
+              <div className="flex items-center gap-2 mb-3">
+                <Ticket className="h-4 w-4 text-primary" />
+                <span className="font-medium">Cupom de Desconto</span>
+              </div>
+              
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between p-3 bg-success/10 border border-success/30 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Check className="h-5 w-5 text-success" />
+                    <span className="font-medium">{appliedCoupon.code}</span>
+                    <span className="text-success">-{appliedCoupon.discount_percentage}%</span>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={removeCoupon}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Digite o código"
+                    value={couponCode}
+                    onChange={(e) => {
+                      setCouponCode(e.target.value.toUpperCase());
+                      setCouponError('');
+                    }}
+                    className="flex-1 uppercase"
+                  />
+                  <Button 
+                    variant="outline" 
+                    onClick={applyCoupon}
+                    disabled={couponLoading}
+                  >
+                    {couponLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Aplicar'}
+                  </Button>
+                </div>
+              )}
+              {couponError && (
+                <p className="text-sm text-destructive mt-2">{couponError}</p>
+              )}
             </div>
 
             <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as any)}>
@@ -327,7 +465,7 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
                   >
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(i => (
                       <option key={i} value={i}>
-                        {i}x de R$ {(product.price / i).toFixed(2)}
+                        {i}x de R$ {(finalPrice / i).toFixed(2)}
                       </option>
                     ))}
                   </select>
@@ -357,7 +495,7 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
                   Processando...
                 </>
               ) : (
-                <>Finalizar Compra - R$ {product.price.toFixed(2)}</>
+                <>Finalizar Compra - R$ {finalPrice.toFixed(2)}</>
               )}
             </Button>
           </div>
