@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,13 @@ import { fetchProducts } from "@/lib/googleSheets";
 import { ShoppingCart, Shield, Zap, ArrowLeft, Package } from "lucide-react";
 import { toast } from "sonner";
 import { CheckoutModal } from "@/components/CheckoutModal";
+import { ProductReviews } from "@/components/ProductReviews";
+import { ReviewForm } from "@/components/ReviewForm";
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const orderId = searchParams.get("orderId");
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -204,6 +208,21 @@ export default function ProductDetail() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Seção de avaliações */}
+          <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <ProductReviews productId={id || ""} />
+            </div>
+            {orderId && (
+              <div>
+                <ReviewForm 
+                  productId={id || ""} 
+                  orderId={orderId}
+                />
+              </div>
+            )}
           </div>
         </div>
       </main>
