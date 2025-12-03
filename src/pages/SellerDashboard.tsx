@@ -78,10 +78,10 @@ const SellerDashboard = () => {
   if (!sellerProfile) return null;
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
       <SellerSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       
-      <main className="flex-1 p-6 overflow-auto">
+      <main className="flex-1 p-4 sm:p-6 overflow-auto pt-16 lg:pt-6">
         {activeTab === "overview" && <SellerOverview seller={sellerProfile} />}
         {activeTab === "products" && <SellerProducts sellerId={sellerProfile.id} />}
         {activeTab === "sales" && <SellerSales sellerId={sellerProfile.id} />}

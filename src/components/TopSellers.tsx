@@ -93,19 +93,19 @@ export const TopSellers = () => {
   const topLikedSellerId = sellers.find((s) => s.likes_count === maxLikes && s.likes_count > 0)?.id;
 
   return (
-    <section className="py-12 bg-gradient-to-b from-background to-muted/30">
-      <div className="container">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold mb-2 flex items-center justify-center gap-2">
-            <TrendingUp className="h-8 w-8 text-primary" />
+    <section className="py-8 sm:py-12 bg-gradient-to-b from-background to-muted/30">
+      <div className="container px-4">
+        <div className="text-center mb-6 sm:mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2 flex items-center justify-center gap-2">
+            <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             Top 5 Vendedores
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             Os melhores vendedores da nossa plataforma
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
           {sellers.map((seller, index) => {
             const ranking = index + 1;
             const badges = calculateSellerBadges(
@@ -117,7 +117,7 @@ export const TopSellers = () => {
             return (
               <Card
                 key={seller.id}
-                className={`relative overflow-hidden transition-all hover:scale-105 ${
+                className={`relative overflow-hidden transition-all hover:scale-[1.02] sm:hover:scale-105 ${
                   ranking === 1
                     ? "border-yellow-500/50 shadow-lg shadow-yellow-500/20"
                     : ranking === 2
@@ -129,7 +129,7 @@ export const TopSellers = () => {
               >
                 {ranking <= 3 && (
                   <div
-                    className={`absolute top-0 right-0 px-3 py-1 text-xs font-bold rounded-bl-lg ${
+                    className={`absolute top-0 right-0 px-2 sm:px-3 py-1 text-xs font-bold rounded-bl-lg ${
                       ranking === 1
                         ? "bg-yellow-500 text-yellow-950"
                         : ranking === 2
@@ -141,10 +141,10 @@ export const TopSellers = () => {
                   </div>
                 )}
 
-                <CardContent className="pt-6 text-center">
-                  <Avatar className="h-16 w-16 mx-auto mb-3 border-2 border-primary/20">
+                <CardContent className="pt-4 sm:pt-6 text-center">
+                  <Avatar className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-2 sm:mb-3 border-2 border-primary/20">
                     <AvatarImage src={seller.avatar_url || ""} alt={seller.full_name} />
-                    <AvatarFallback className="text-lg font-bold bg-primary/10">
+                    <AvatarFallback className="text-base sm:text-lg font-bold bg-primary/10">
                       {seller.full_name
                         .split(" ")
                         .map((n) => n[0])
@@ -154,19 +154,19 @@ export const TopSellers = () => {
                     </AvatarFallback>
                   </Avatar>
 
-                  <h3 className="font-semibold mb-2 truncate">{seller.full_name}</h3>
+                  <h3 className="font-semibold text-sm sm:text-base mb-2 truncate px-2">{seller.full_name}</h3>
 
-                  <div className="flex justify-center mb-3">
+                  <div className="flex justify-center mb-2 sm:mb-3">
                     <SellerBadges badges={badges} size="sm" />
                   </div>
 
-                  <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground mb-4">
+                  <div className="flex items-center justify-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
                     <span className="flex items-center gap-1">
-                      <ShoppingBag className="h-4 w-4" />
+                      <ShoppingBag className="h-3 w-3 sm:h-4 sm:w-4" />
                       {seller.total_sales}
                     </span>
                     <span className="flex items-center gap-1">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-yellow-400 text-yellow-400" />
                       {seller.average_rating.toFixed(1)}
                     </span>
                   </div>
@@ -174,7 +174,7 @@ export const TopSellers = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full"
+                    className="w-full h-9 sm:h-10 text-sm"
                     onClick={() => navigate(`/seller/${seller.id}`)}
                   >
                     Ver Perfil

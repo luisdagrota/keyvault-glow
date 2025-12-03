@@ -67,25 +67,25 @@ export default function Home() {
         <Hero />
         <TrustBadges />
         
-        <section className="py-16">
-          <div className="container">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+        <section className="py-10 sm:py-16">
+          <div className="container px-4">
+            <div className="text-center mb-8 sm:mb-12">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">
                 Produtos em <span className="gradient-text">Destaque</span>
               </h2>
-              <p className="text-muted-foreground">
+              <p className="text-sm sm:text-base text-muted-foreground">
                 Os jogos mais procurados da semana com preços especiais
               </p>
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="card-gaming h-80 animate-pulse" />
+                  <div key={i} className="card-gaming h-64 sm:h-80 animate-pulse" />
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {featuredProducts.map((product) => (
                   <ProductCard
                     key={product.id}
