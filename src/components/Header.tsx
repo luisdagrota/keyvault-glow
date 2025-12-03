@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Menu, User } from "lucide-react";
+import { Search, Menu, User, MessageSquare } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useState, FormEvent, useRef, useEffect } from "react";
@@ -7,6 +7,7 @@ import logo from "@/assets/logo.png";
 import { SearchPreview } from "./SearchPreview";
 import { supabase } from "@/integrations/supabase/client";
 import { User as SupabaseUser } from "@supabase/supabase-js";
+import { NotificationBadge } from "./NotificationBadge";
 
 export function Header() {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ export function Header() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loadingAdmin, setLoadingAdmin] = useState(true);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const searchRef = useRef<HTMLDivElement>(null);
 
   const ADMIN_EMAIL = "luisdagrota20@gmail.com";
@@ -35,6 +37,7 @@ export function Header() {
         if (!currentUser) {
           console.log('❌ Nenhum usuário logado');
           setIsAdmin(false);
+          setUnreadMessages(0);
           return;
         }
 
@@ -48,6 +51,8 @@ export function Header() {
         if (currentUser.email === ADMIN_EMAIL) {
           console.log('✅ Email coincide com admin:', ADMIN_EMAIL);
           setIsAdmin(true);
+          // Load admin unread messages
+          loadAdminUnreadMessages();
           return;
         }
 
@@ -69,12 +74,53 @@ export function Header() {
           const hasAdminRole = !!roleRow;
           console.log(hasAdminRole ? '✅ Usuário tem role admin' : '❌ Usuário não tem role admin');
           setIsAdmin(hasAdminRole);
+          if (hasAdminRole) {
+            loadAdminUnreadMessages();
+          }
         }
+
+        // Load customer unread messages
+        loadCustomerUnreadMessages(currentUser.id);
       } catch (err) {
         console.error('❌ Erro em checkUserAndRole:', err);
         setIsAdmin(false);
       } finally {
         if (mounted) setLoadingAdmin(false);
+      }
+    };
+
+    const loadAdminUnreadMessages = async () => {
+      const { data, error } = await supabase
+        .from('order_chat_status')
+        .select('unread_admin_count')
+        .eq('is_archived', false);
+
+      if (!error && data) {
+        const total = data.reduce((sum, item) => sum + (item.unread_admin_count || 0), 0);
+        setUnreadMessages(total);
+      }
+    };
+
+    const loadCustomerUnreadMessages = async (userId: string) => {
+      const { data: orders, error } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('user_id', userId);
+
+      if (!error && orders) {
+        const orderIds = orders.map(o => o.id);
+        if (orderIds.length > 0) {
+          const { data: statuses } = await supabase
+            .from('order_chat_status')
+            .select('unread_customer_count')
+            .in('order_id', orderIds)
+            .eq('is_archived', false);
+
+          if (statuses) {
+            const total = statuses.reduce((sum, item) => sum + (item.unread_customer_count || 0), 0);
+            setUnreadMessages(total);
+          }
+        }
       }
     };
 
@@ -87,9 +133,35 @@ export function Header() {
       checkUserAndRole(session);
     });
 
+    // Subscribe to chat status updates
+    const chatChannel = supabase
+      .channel('header-chat-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'order_chat_status'
+        },
+        () => {
+          // Reload unread counts
+          supabase.auth.getUser().then(({ data: { user } }) => {
+            if (user) {
+              if (user.email === ADMIN_EMAIL) {
+                loadAdminUnreadMessages();
+              } else {
+                loadCustomerUnreadMessages(user.id);
+              }
+            }
+          });
+        }
+      )
+      .subscribe();
+
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      supabase.removeChannel(chatChannel);
     };
   }, []);
 
@@ -170,13 +242,15 @@ export function Header() {
           {user ? (
             <div className="flex items-center gap-2">
               {isAdmin && (
-                <Button variant="outline" size="sm" onClick={() => navigate("/admin")}>
+                <Button variant="outline" size="sm" onClick={() => navigate("/admin")} className="relative">
                   Painel ADM
+                  <NotificationBadge count={unreadMessages} />
                 </Button>
               )}
-              <Button variant="ghost" size="sm" onClick={() => navigate("/profile")}>
+              <Button variant="ghost" size="sm" onClick={() => navigate("/profile")} className="relative">
                 <User className="h-4 w-4 mr-2" />
                 Perfil
+                {!isAdmin && <NotificationBadge count={unreadMessages} />}
               </Button>
             </div>
           ) : (

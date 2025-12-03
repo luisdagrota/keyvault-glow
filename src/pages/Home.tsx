@@ -9,6 +9,7 @@ import { Product } from "@/types/product";
 import { fetchProducts } from "@/lib/googleSheets";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -55,6 +56,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEOHead
+        title="Jogos Digitais"
+        description="GameKeys Store - Compre jogos digitais com os melhores preços. Keys de jogos para PC, PlayStation, Xbox e mais. Entrega instantânea e 100% seguro."
+      />
       <Header />
       <main className="flex-1">
         <Hero />

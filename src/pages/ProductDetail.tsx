@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { CheckoutModal } from "@/components/CheckoutModal";
 import { ProductReviews } from "@/components/ProductReviews";
 import { ReviewForm } from "@/components/ReviewForm";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -82,9 +83,20 @@ export default function ProductDetail() {
   }
 
   const isOutOfStock = product.stock === 0;
+  const seoDescription = product.description.length > 155 
+    ? product.description.substring(0, 155) + "..." 
+    : product.description;
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEOHead
+        title={product.name}
+        description={seoDescription}
+        image={product.imageUrl}
+        type="product"
+        price={product.price}
+        url={window.location.href}
+      />
       <Header />
       <main className="flex-1 py-12">
         <div className="container">

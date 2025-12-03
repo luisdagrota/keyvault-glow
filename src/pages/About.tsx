@@ -1,10 +1,15 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Shield, Zap, Heart, Users } from "lucide-react";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function About() {
   return (
     <div className="min-h-screen flex flex-col">
+      <SEOHead
+        title="Sobre Nós"
+        description="Conheça a GameKeys Store - A loja de jogos digitais mais confiável do Brasil. Segurança total, entrega instantânea e suporte 24/7."
+      />
       <Header />
       <main className="flex-1 py-12">
         <div className="container">

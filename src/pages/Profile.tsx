@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Loader2, Package, User as UserIcon, MessageSquare, CheckCircle2 } from "lucide-react";
+import { Loader2, Package, User as UserIcon, MessageSquare, CheckCircle2, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import {
@@ -24,11 +24,13 @@ interface Profile {
 
 interface Order {
   id: string;
+  product_id: string;
   product_name: string;
   transaction_amount: number;
   payment_status: string;
   payment_method: string;
   created_at: string;
+  updated_at?: string;
   customer_name: string | null;
   chat_status?: {
     unread_customer_count: number;
@@ -169,9 +171,15 @@ const Profile = () => {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
+  // Active orders with open chats (not delivered)
   const activeOrders = orders.filter(order => 
-    order.payment_status !== 'delivered' &&
+    order.payment_status === 'approved' &&
     !order.chat_status?.[0]?.is_archived
+  );
+
+  // Recently delivered orders (show success message)
+  const deliveredOrders = orders.filter(order => 
+    order.payment_status === 'delivered'
   );
 
   const totalUnread = activeOrders.reduce((sum, order) => {
@@ -282,6 +290,46 @@ const Profile = () => {
                       </div>
                     );
                   })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Success message for recently delivered orders */}
+          {deliveredOrders.length > 0 && (
+            <Card className="border-success/50 bg-success/5">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-success" />
+                  <CardTitle className="text-success">Pedidos Concluídos</CardTitle>
+                </div>
+                <CardDescription>
+                  ✅ Seus pedidos foram entregues com sucesso!
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {deliveredOrders.slice(0, 3).map((order) => (
+                    <div
+                      key={order.id}
+                      className="flex items-center justify-between p-3 bg-background rounded-lg border"
+                    >
+                      <div>
+                        <h4 className="font-semibold">{order.product_name}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Entregue em {new Date(order.updated_at || order.created_at).toLocaleDateString("pt-BR")}
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.location.href = `/product/${order.product_id}?orderId=${order.id}`}
+                      >
+                        <Star className="h-4 w-4 mr-1" />
+                        Avaliar
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
