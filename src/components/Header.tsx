@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Menu, User, MessageSquare } from "lucide-react";
+import { Search, Menu, User, MessageSquare, Store } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useState, FormEvent, useRef, useEffect } from "react";
@@ -15,6 +15,7 @@ export function Header() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSeller, setIsSeller] = useState(false);
   const [loadingAdmin, setLoadingAdmin] = useState(true);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -37,6 +38,7 @@ export function Header() {
         if (!currentUser) {
           console.log('❌ Nenhum usuário logado');
           setIsAdmin(false);
+          setIsSeller(false);
           setUnreadMessages(0);
           return;
         }
@@ -81,6 +83,9 @@ export function Header() {
 
         // Load customer unread messages
         loadCustomerUnreadMessages(currentUser.id);
+
+        // Check if user is a seller
+        checkSellerStatus(currentUser.id);
       } catch (err) {
         console.error('❌ Erro em checkUserAndRole:', err);
         setIsAdmin(false);
@@ -122,6 +127,16 @@ export function Header() {
           }
         }
       }
+    };
+
+    const checkSellerStatus = async (userId: string) => {
+      const { data: seller } = await supabase
+        .from('seller_profiles')
+        .select('is_approved, is_suspended')
+        .eq('user_id', userId)
+        .single();
+
+      setIsSeller(seller?.is_approved && !seller?.is_suspended);
     };
 
     // Verificação inicial
@@ -245,6 +260,18 @@ export function Header() {
                 <Button variant="outline" size="sm" onClick={() => navigate("/admin")} className="relative">
                   Painel ADM
                   <NotificationBadge count={unreadMessages} />
+                </Button>
+              )}
+              {isSeller && !isAdmin && (
+                <Button variant="outline" size="sm" onClick={() => navigate("/seller")}>
+                  <Store className="h-4 w-4 mr-2" />
+                  Painel Vendedor
+                </Button>
+              )}
+              {!isSeller && !isAdmin && (
+                <Button variant="ghost" size="sm" onClick={() => navigate("/become-seller")}>
+                  <Store className="h-4 w-4 mr-2" />
+                  Vender
                 </Button>
               )}
               <Button variant="ghost" size="sm" onClick={() => navigate("/profile")} className="relative">
