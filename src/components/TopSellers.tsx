@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, ShoppingBag, TrendingUp, Loader2 } from "lucide-react";
 import { SellerBadges, calculateSellerBadges } from "@/components/seller/SellerBadges";
 
@@ -14,6 +14,7 @@ interface TopSeller {
   average_rating: number;
   created_at: string;
   likes_count: number;
+  avatar_url: string | null;
 }
 
 export const TopSellers = () => {
@@ -26,7 +27,7 @@ export const TopSellers = () => {
       // Get top 5 sellers ordered by total_sales, then by average_rating
       const { data, error } = await supabase
         .from("seller_profiles")
-        .select("id, full_name, total_sales, average_rating, created_at")
+        .select("id, full_name, total_sales, average_rating, created_at, user_id")
         .eq("is_approved", true)
         .eq("is_suspended", false)
         .order("total_sales", { ascending: false })
@@ -39,24 +40,32 @@ export const TopSellers = () => {
         return;
       }
 
-      // Get likes count for each seller
-      const sellersWithLikes = await Promise.all(
+      // Get likes count and avatar for each seller
+      const sellersWithLikesAndAvatar = await Promise.all(
         (data || []).map(async (seller) => {
-          const { data: products } = await supabase
-            .from("seller_products")
-            .select("likes_count")
-            .eq("seller_id", seller.id);
+          const [{ data: products }, { data: profile }] = await Promise.all([
+            supabase
+              .from("seller_products")
+              .select("likes_count")
+              .eq("seller_id", seller.id),
+            supabase
+              .from("profiles")
+              .select("avatar_url")
+              .eq("id", seller.user_id)
+              .single()
+          ]);
 
           const totalLikes = products?.reduce((sum, p) => sum + (p.likes_count || 0), 0) || 0;
 
           return {
             ...seller,
             likes_count: totalLikes,
+            avatar_url: profile?.avatar_url || null,
           };
         })
       );
 
-      setSellers(sellersWithLikes);
+      setSellers(sellersWithLikesAndAvatar);
       setLoading(false);
     };
 
@@ -134,6 +143,7 @@ export const TopSellers = () => {
 
                 <CardContent className="pt-6 text-center">
                   <Avatar className="h-16 w-16 mx-auto mb-3 border-2 border-primary/20">
+                    <AvatarImage src={seller.avatar_url || ""} alt={seller.full_name} />
                     <AvatarFallback className="text-lg font-bold bg-primary/10">
                       {seller.full_name
                         .split(" ")
