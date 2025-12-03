@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Star, ShoppingBag, Calendar, Heart, Package } from "lucide-react";
+import { Loader2, Star, Calendar, Heart, Package } from "lucide-react";
+import { LikeButton } from "@/components/LikeButton";
 import { SellerBadges, calculateSellerBadges, SELLER_BADGES } from "@/components/seller/SellerBadges";
 import { SEOHead } from "@/components/SEOHead";
 
@@ -266,10 +267,11 @@ const SellerProfile = () => {
                           <span className="text-lg font-bold text-primary">
                             R$ {product.price.toFixed(2)}
                           </span>
-                          <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Heart className="h-4 w-4" />
-                            {product.likes_count}
-                          </span>
+                          <LikeButton
+                            productId={product.id}
+                            initialLikesCount={product.likes_count}
+                            size="sm"
+                          />
                         </div>
                       </CardContent>
                     </Card>
