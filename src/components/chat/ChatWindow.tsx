@@ -239,31 +239,31 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
   }
 
   return (
-    <Card className="card-gaming flex flex-col h-[600px]">
-      <CardHeader className="border-b border-border">
-        <div className="flex items-center justify-between">
+    <Card className="card-gaming flex flex-col h-[calc(100vh-200px)] sm:h-[600px] min-h-[400px] max-h-[700px]">
+      <CardHeader className="border-b border-border p-3 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
           <div>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Chat do Pedido {orderNumber}
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Package className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="truncate">Chat do Pedido {orderNumber}</span>
             </CardTitle>
             {customerName && (
-              <p className="text-sm text-muted-foreground mt-1">Cliente: {customerName}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">Cliente: {customerName}</p>
             )}
           </div>
           {isAdmin && onMarkAsDelivered && (
-            <Button onClick={onMarkAsDelivered} variant="default" size="sm">
+            <Button onClick={onMarkAsDelivered} variant="default" size="sm" className="w-full sm:w-auto mt-2 sm:mt-0 h-9">
               Marcar como Entregue
             </Button>
           )}
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col p-0">
-        <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-          <div className="space-y-4">
+      <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
+        <ScrollArea className="flex-1 p-3 sm:p-4" ref={scrollRef}>
+          <div className="space-y-3 sm:space-y-4">
             {messages.length === 0 && (
-              <div className="text-center text-muted-foreground py-8">
+              <div className="text-center text-muted-foreground py-6 sm:py-8 text-sm">
                 Nenhuma mensagem ainda. Inicie a conversa!
               </div>
             )}
@@ -276,13 +276,13 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
                   key={msg.id}
                   className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div className={`max-w-[70%] ${isOwnMessage ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
+                  <div className={`max-w-[85%] sm:max-w-[70%] ${isOwnMessage ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
                     <Badge variant={msg.sender_type === 'admin' ? 'default' : 'secondary'} className="text-xs">
                       {msg.sender_type === 'admin' ? 'ADM' : 'Cliente'}
                     </Badge>
                     
                     <div
-                      className={`rounded-lg p-3 ${
+                      className={`rounded-lg p-2 sm:p-3 text-sm ${
                         isOwnMessage
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted text-foreground'
@@ -295,15 +295,15 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
                           href={msg.attachment_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-2 mt-2 text-sm underline hover:opacity-80"
+                          className="flex items-center gap-2 mt-2 text-xs sm:text-sm underline hover:opacity-80"
                         >
-                          <Paperclip className="h-4 w-4" />
+                          <Paperclip className="h-3 w-3 sm:h-4 sm:w-4" />
                           {msg.attachment_name || 'Anexo'}
                         </a>
                       )}
                     </div>
                     
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-[10px] sm:text-xs text-muted-foreground">
                       {formatTime(msg.created_at)}
                     </span>
                   </div>
@@ -313,15 +313,16 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
           </div>
         </ScrollArea>
 
-        <div className="border-t border-border p-4 space-y-2">
+        <div className="border-t border-border p-3 sm:p-4 space-y-2">
           {selectedFile && (
             <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
-              <Paperclip className="h-4 w-4" />
-              <span className="text-sm flex-1 truncate">{selectedFile.name}</span>
+              <Paperclip className="h-4 w-4 flex-shrink-0" />
+              <span className="text-xs sm:text-sm flex-1 truncate">{selectedFile.name}</span>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setSelectedFile(null)}
+                className="h-8 w-8 p-0"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -342,6 +343,7 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
               size="icon"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
+              className="h-10 w-10 sm:h-10 sm:w-10 flex-shrink-0"
             >
               <Paperclip className="h-4 w-4" />
             </Button>
@@ -350,7 +352,7 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Digite sua mensagem..."
-              className="flex-1 min-h-[40px] max-h-[120px] resize-none"
+              className="flex-1 min-h-[40px] max-h-[100px] sm:max-h-[120px] resize-none text-sm"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
@@ -363,6 +365,7 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
               onClick={handleSendMessage}
               disabled={uploading || (!newMessage.trim() && !selectedFile)}
               size="icon"
+              className="h-10 w-10 sm:h-10 sm:w-10 flex-shrink-0"
             >
               <Send className="h-4 w-4" />
             </Button>

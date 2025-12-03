@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Menu, User, Store } from "lucide-react";
+import { Search, Menu, User, Store, X, Home, Package, Info, LogOut } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useState, FormEvent, useRef, useEffect } from "react";
@@ -9,6 +9,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { NotificationBadge } from "./NotificationBadge";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "./ui/sheet";
 
 export function Header() {
   const navigate = useNavigate();
@@ -21,6 +28,8 @@ export function Header() {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
   const ADMIN_EMAIL = "luisdagrota20@gmail.com";
@@ -200,6 +209,7 @@ export function Header() {
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
     setIsPreviewOpen(false);
+    setMobileSearchOpen(false);
     if (searchTerm.trim()) {
       navigate(`/products?search=${encodeURIComponent(searchTerm.trim())}`);
     } else {
@@ -223,17 +233,28 @@ export function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setMobileMenuOpen(false);
+    navigate("/");
+  };
+
+  const handleNavigate = (path: string) => {
+    setMobileMenuOpen(false);
+    navigate(path);
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-6">
+      <div className="container flex h-14 sm:h-16 items-center justify-between px-4">
+        <div className="flex items-center gap-4 sm:gap-6">
           <Link to="/" className="flex items-center space-x-2">
             <img 
               src={logo} 
               alt="GameKeys Logo" 
-              className="h-10 w-10 object-contain mix-blend-multiply dark:mix-blend-screen" 
+              className="h-8 w-8 sm:h-10 sm:w-10 object-contain mix-blend-multiply dark:mix-blend-screen" 
             />
-            <span className="text-xl font-bold gradient-text">GameKeys</span>
+            <span className="text-lg sm:text-xl font-bold gradient-text">GameKeys</span>
           </Link>
           
           <nav className="hidden md:flex items-center gap-6 text-sm">
@@ -249,7 +270,8 @@ export function Header() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* Desktop Search */}
           <div ref={searchRef} className="hidden md:block relative">
             <form onSubmit={handleSearch} className="flex items-center gap-2">
               <Input
@@ -271,8 +293,18 @@ export function Header() {
             />
           </div>
 
+          {/* Mobile Search Button */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="md:hidden h-9 w-9"
+            onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+          >
+            <Search className="h-5 w-5" />
+          </Button>
+
           {user ? (
-            <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2">
               {isAdmin && (
                 <Button variant="outline" size="sm" onClick={() => navigate("/admin")} className="relative">
                   Painel ADM
@@ -303,16 +335,156 @@ export function Header() {
               </Button>
             </div>
           ) : (
-            <Button variant="default" size="sm" onClick={() => navigate("/auth")}>
+            <Button variant="default" size="sm" onClick={() => navigate("/auth")} className="hidden sm:flex">
               Entrar
             </Button>
           )}
 
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Menu className="h-5 w-5" />
-          </Button>
+          {/* Mobile Menu */}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden h-9 w-9">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[280px] sm:w-[320px]">
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  <img src={logo} alt="Logo" className="h-8 w-8" />
+                  <span className="gradient-text">GameKeys</span>
+                </SheetTitle>
+              </SheetHeader>
+              
+              <nav className="flex flex-col gap-2 mt-6">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start h-12 text-base"
+                  onClick={() => handleNavigate("/")}
+                >
+                  <Home className="h-5 w-5 mr-3" />
+                  Início
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start h-12 text-base"
+                  onClick={() => handleNavigate("/products")}
+                >
+                  <Package className="h-5 w-5 mr-3" />
+                  Produtos
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start h-12 text-base"
+                  onClick={() => handleNavigate("/about")}
+                >
+                  <Info className="h-5 w-5 mr-3" />
+                  Sobre
+                </Button>
+
+                <div className="h-px bg-border my-2" />
+
+                {user ? (
+                  <>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start h-12 text-base relative"
+                      onClick={() => handleNavigate("/profile")}
+                    >
+                      <Avatar className="h-6 w-6 mr-3">
+                        <AvatarImage src={avatarUrl || ""} alt={userName} />
+                        <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                          {userName ? userName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : <User className="h-3 w-3" />}
+                        </AvatarFallback>
+                      </Avatar>
+                      Meu Perfil
+                      {!isAdmin && unreadMessages > 0 && (
+                        <span className="ml-auto bg-destructive text-destructive-foreground text-xs rounded-full px-2 py-0.5">
+                          {unreadMessages}
+                        </span>
+                      )}
+                    </Button>
+                    
+                    {isAdmin && (
+                      <Button
+                        variant="default"
+                        className="w-full justify-start h-12 text-base relative"
+                        onClick={() => handleNavigate("/admin")}
+                      >
+                        Painel ADM
+                        {unreadMessages > 0 && (
+                          <span className="ml-auto bg-background text-foreground text-xs rounded-full px-2 py-0.5">
+                            {unreadMessages}
+                          </span>
+                        )}
+                      </Button>
+                    )}
+                    
+                    {isSeller && !isAdmin && (
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start h-12 text-base"
+                        onClick={() => handleNavigate("/seller")}
+                      >
+                        <Store className="h-5 w-5 mr-3" />
+                        Painel Vendedor
+                      </Button>
+                    )}
+                    
+                    {!isSeller && !isAdmin && (
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start h-12 text-base"
+                        onClick={() => handleNavigate("/become-seller")}
+                      >
+                        <Store className="h-5 w-5 mr-3" />
+                        Quero Vender
+                      </Button>
+                    )}
+
+                    <div className="h-px bg-border my-2" />
+                    
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start h-12 text-base text-destructive hover:text-destructive"
+                      onClick={handleLogout}
+                    >
+                      <LogOut className="h-5 w-5 mr-3" />
+                      Sair
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    variant="default"
+                    className="w-full h-12 text-base"
+                    onClick={() => handleNavigate("/auth")}
+                  >
+                    Entrar / Cadastrar
+                  </Button>
+                )}
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
+
+      {/* Mobile Search Bar */}
+      {mobileSearchOpen && (
+        <div className="md:hidden border-t border-border p-3 bg-background">
+          <form onSubmit={handleSearch} className="flex items-center gap-2">
+            <Input
+              type="search"
+              placeholder="Buscar jogos..."
+              className="flex-1 h-11"
+              value={searchTerm}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              autoFocus
+            />
+            <Button type="submit" size="icon" className="h-11 w-11">
+              <Search className="h-5 w-5" />
+            </Button>
+          </form>
+        </div>
+      )}
     </header>
   );
 }

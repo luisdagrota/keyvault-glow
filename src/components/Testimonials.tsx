@@ -27,39 +27,40 @@ const testimonials = [
 
 export function Testimonials() {
   return (
-    <section className="py-16">
-      <div className="container">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+    <section className="py-8 sm:py-16">
+      <div className="container px-4">
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">
             O Que Nossos <span className="gradient-text">Clientes Dizem</span>
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             Milhares de gamers já confiaram em nós. Veja alguns depoimentos:
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
           {testimonials.map((testimonial) => (
-            <Card key={testimonial.name} className="p-6 bg-card border-border hover:border-primary/50 transition-colors">
-              <div className="flex items-start gap-4 mb-4">
+            <Card key={testimonial.name} className="p-4 sm:p-6 bg-card border-border hover:border-primary/50 transition-colors">
+              <div className="flex items-start gap-3 sm:gap-4 mb-3 sm:mb-4">
                 <img
                   src={testimonial.avatar}
                   alt={testimonial.name}
-                  className="h-12 w-12 rounded-full"
+                  className="h-10 w-10 sm:h-12 sm:w-12 rounded-full"
+                  loading="lazy"
                 />
-                <div className="flex-1">
-                  <div className="font-bold">{testimonial.name}</div>
-                  <div className="flex items-center gap-1 mt-1">
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-sm sm:text-base truncate">{testimonial.name}</div>
+                  <div className="flex items-center gap-0.5 sm:gap-1 mt-1">
                     {Array.from({ length: testimonial.rating }).map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-warning text-warning" />
+                      <Star key={i} className="h-3 w-3 sm:h-4 sm:w-4 fill-warning text-warning" />
                     ))}
                   </div>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground mb-2">
+              <p className="text-xs sm:text-sm text-muted-foreground mb-2">
                 "{testimonial.comment}"
               </p>
-              <p className="text-xs text-muted-foreground">{testimonial.date}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">{testimonial.date}</p>
             </Card>
           ))}
         </div>
