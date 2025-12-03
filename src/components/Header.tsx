@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Menu, User, MessageSquare, Store } from "lucide-react";
+import { Search, Menu, User, Store } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useState, FormEvent, useRef, useEffect } from "react";
@@ -8,6 +8,7 @@ import { SearchPreview } from "./SearchPreview";
 import { supabase } from "@/integrations/supabase/client";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { NotificationBadge } from "./NotificationBadge";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 export function Header() {
   const navigate = useNavigate();
@@ -18,6 +19,8 @@ export function Header() {
   const [isSeller, setIsSeller] = useState(false);
   const [loadingAdmin, setLoadingAdmin] = useState(true);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("");
   const searchRef = useRef<HTMLDivElement>(null);
 
   const ADMIN_EMAIL = "luisdagrota20@gmail.com";
@@ -40,7 +43,21 @@ export function Header() {
           setIsAdmin(false);
           setIsSeller(false);
           setUnreadMessages(0);
+          setAvatarUrl(null);
+          setUserName("");
           return;
+        }
+
+        // Fetch user profile with avatar
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('avatar_url, full_name')
+          .eq('id', currentUser.id)
+          .single();
+        
+        if (profile) {
+          setAvatarUrl(profile.avatar_url);
+          setUserName(profile.full_name || "");
         }
 
         console.log('✅ Usuário logado:', {
@@ -274,9 +291,14 @@ export function Header() {
                   Vender
                 </Button>
               )}
-              <Button variant="ghost" size="sm" onClick={() => navigate("/profile")} className="relative">
-                <User className="h-4 w-4 mr-2" />
-                Perfil
+              <Button variant="ghost" size="sm" onClick={() => navigate("/profile")} className="relative gap-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={avatarUrl || ""} alt={userName} />
+                  <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                    {userName ? userName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : <User className="h-3 w-3" />}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="hidden sm:inline">Perfil</span>
                 {!isAdmin && <NotificationBadge count={unreadMessages} />}
               </Button>
             </div>
