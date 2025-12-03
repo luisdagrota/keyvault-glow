@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, ShoppingCart, FileText, Home, MessageSquare, Ticket, Star } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, FileText, Home, MessageSquare, Ticket, Star, Users } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -22,6 +22,8 @@ export function AdminSidebar() {
   const currentPath = location.pathname;
   const [unreadChats, setUnreadChats] = useState(0);
   const [pendingReviews, setPendingReviews] = useState(0);
+  const [pendingSellers, setPendingSellers] = useState(0);
+  const [pendingWithdrawals, setPendingWithdrawals] = useState(0);
 
   useEffect(() => {
     loadNotifications();
@@ -36,6 +38,16 @@ export function AdminSidebar() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'product_reviews' },
+        () => loadNotifications()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'seller_profiles' },
+        () => loadNotifications()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'seller_withdrawals' },
         () => loadNotifications()
       )
       .subscribe();
@@ -64,6 +76,22 @@ export function AdminSidebar() {
       .eq('is_approved', false);
 
     setPendingReviews(reviewCount || 0);
+
+    // Load pending sellers count
+    const { count: sellerCount } = await supabase
+      .from('seller_profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_approved', false);
+
+    setPendingSellers(sellerCount || 0);
+
+    // Load pending withdrawals count
+    const { count: withdrawalCount } = await supabase
+      .from('seller_withdrawals')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending');
+
+    setPendingWithdrawals(withdrawalCount || 0);
   };
 
   const menuItems = [
@@ -72,6 +100,7 @@ export function AdminSidebar() {
     { title: "Pedidos", url: "/admin/orders", icon: ShoppingCart },
     { title: "Cupons", url: "/admin/coupons", icon: Ticket },
     { title: "Avaliações", url: "/admin/reviews", icon: Star, badge: pendingReviews },
+    { title: "Vendedores", url: "/admin/sellers", icon: Users, badge: pendingSellers + pendingWithdrawals },
     { title: "Chats", url: "/admin/chats", icon: MessageSquare, badge: unreadChats },
     { title: "Relatórios", url: "/admin/reports", icon: FileText },
   ];

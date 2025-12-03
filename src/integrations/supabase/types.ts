@@ -303,6 +303,214 @@ export type Database = {
         }
         Relationships: []
       }
+      seller_products: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          likes_count: number
+          name: string
+          price: number
+          seller_id: string
+          stock: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          likes_count?: number
+          name: string
+          price: number
+          seller_id: string
+          stock?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          likes_count?: number
+          name?: string
+          price?: number
+          seller_id?: string
+          stock?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_products_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_profiles: {
+        Row: {
+          available_balance: number
+          average_rating: number
+          birth_date: string
+          cpf: string
+          created_at: string
+          full_name: string
+          id: string
+          is_approved: boolean
+          is_suspended: boolean
+          pending_balance: number
+          pix_key: string
+          total_sales: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          available_balance?: number
+          average_rating?: number
+          birth_date: string
+          cpf: string
+          created_at?: string
+          full_name: string
+          id?: string
+          is_approved?: boolean
+          is_suspended?: boolean
+          pending_balance?: number
+          pix_key: string
+          total_sales?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          available_balance?: number
+          average_rating?: number
+          birth_date?: string
+          cpf?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          is_approved?: boolean
+          is_suspended?: boolean
+          pending_balance?: number
+          pix_key?: string
+          total_sales?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      seller_sales: {
+        Row: {
+          balance_released_at: string | null
+          buyer_email: string
+          buyer_id: string | null
+          buyer_name: string
+          created_at: string
+          fee_amount: number
+          id: string
+          net_amount: number
+          product_id: string
+          product_name: string
+          sale_amount: number
+          seller_id: string
+          status: string
+        }
+        Insert: {
+          balance_released_at?: string | null
+          buyer_email: string
+          buyer_id?: string | null
+          buyer_name: string
+          created_at?: string
+          fee_amount: number
+          id?: string
+          net_amount: number
+          product_id: string
+          product_name: string
+          sale_amount: number
+          seller_id: string
+          status?: string
+        }
+        Update: {
+          balance_released_at?: string | null
+          buyer_email?: string
+          buyer_id?: string | null
+          buyer_name?: string
+          created_at?: string
+          fee_amount?: number
+          id?: string
+          net_amount?: number
+          product_id?: string
+          product_name?: string
+          sale_amount?: number
+          seller_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_sales_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "seller_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_sales_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_withdrawals: {
+        Row: {
+          amount: number
+          id: string
+          pix_key: string
+          processed_at: string | null
+          processed_by: string | null
+          requested_at: string
+          seller_id: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          id?: string
+          pix_key: string
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          seller_id: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          id?: string
+          pix_key?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          seller_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_withdrawals_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -339,6 +547,7 @@ export type Database = {
             }
             Returns: boolean
           }
+      release_seller_balance: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"
