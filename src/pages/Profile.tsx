@@ -7,7 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Loader2, Package, User as UserIcon, MessageSquare, CheckCircle2, Star } from "lucide-react";
+import { Loader2, Package, User as UserIcon, MessageSquare, CheckCircle2, Star, Camera, Save } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import {
@@ -20,6 +22,7 @@ import {
 
 interface Profile {
   full_name: string;
+  avatar_url: string | null;
 }
 
 interface Order {
@@ -44,6 +47,9 @@ const Profile = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [editingAvatar, setEditingAvatar] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [savingAvatar, setSavingAvatar] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -76,7 +82,7 @@ const Profile = () => {
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("full_name")
+      .select("full_name, avatar_url")
       .eq("id", userId)
       .single();
 
@@ -86,6 +92,37 @@ const Profile = () => {
     }
 
     setProfile(data);
+    setAvatarUrl(data.avatar_url || "");
+  };
+
+  const handleSaveAvatar = async () => {
+    if (!user) return;
+    
+    setSavingAvatar(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ avatar_url: avatarUrl.trim() || null })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      setProfile((prev) => prev ? { ...prev, avatar_url: avatarUrl.trim() || null } : null);
+      setEditingAvatar(false);
+      toast({
+        title: "Foto atualizada!",
+        description: "Sua foto de perfil foi salva com sucesso.",
+      });
+    } catch (error) {
+      console.error("Error saving avatar:", error);
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar a foto de perfil.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingAvatar(false);
+    }
   };
 
   const fetchOrders = async (userId: string) => {
@@ -207,8 +244,19 @@ const Profile = () => {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <UserIcon className="h-8 w-8 text-primary" />
+                  <div className="relative group">
+                    <Avatar className="h-20 w-20 border-2 border-border">
+                      <AvatarImage src={profile?.avatar_url || ""} alt={profile?.full_name} />
+                      <AvatarFallback className="text-xl bg-primary/10 text-primary">
+                        {profile?.full_name?.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || <UserIcon className="h-8 w-8" />}
+                      </AvatarFallback>
+                    </Avatar>
+                    <button
+                      onClick={() => setEditingAvatar(true)}
+                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Camera className="h-6 w-6 text-white" />
+                    </button>
                   </div>
                   <div>
                     <CardTitle className="text-2xl">{profile?.full_name}</CardTitle>
@@ -219,6 +267,42 @@ const Profile = () => {
                   Sair
                 </Button>
               </div>
+
+              {editingAvatar && (
+                <div className="mt-4 p-4 rounded-lg bg-muted/50 border space-y-3">
+                  <p className="text-sm font-medium">Foto de Perfil</p>
+                  <p className="text-xs text-muted-foreground">
+                    Cole o link de uma imagem (URL) para usar como foto de perfil
+                  </p>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="https://exemplo.com/minha-foto.jpg"
+                      value={avatarUrl}
+                      onChange={(e) => setAvatarUrl(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button onClick={handleSaveAvatar} disabled={savingAvatar} size="sm">
+                      {savingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      Salvar
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => {
+                      setEditingAvatar(false);
+                      setAvatarUrl(profile?.avatar_url || "");
+                    }}>
+                      Cancelar
+                    </Button>
+                  </div>
+                  {avatarUrl && (
+                    <div className="flex items-center gap-3 pt-2">
+                      <p className="text-xs text-muted-foreground">Pré-visualização:</p>
+                      <Avatar className="h-12 w-12 border">
+                        <AvatarImage src={avatarUrl} alt="Preview" />
+                        <AvatarFallback>?</AvatarFallback>
+                      </Avatar>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardHeader>
           </Card>
 
