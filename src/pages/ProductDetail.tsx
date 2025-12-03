@@ -154,9 +154,15 @@ export default function ProductDetail() {
 
               <div className="space-y-4">
                 <h2 className="text-xl font-bold">Descrição</h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  {product.description}
-                </p>
+                <div className="p-4 rounded-lg bg-muted/30 border border-border/50">
+                  <div className="text-muted-foreground leading-relaxed whitespace-pre-line space-y-2">
+                    {product.description.split(/[.!?]+/).filter(Boolean).map((sentence, index) => (
+                      <p key={index} className="text-sm md:text-base">
+                        {sentence.trim()}.
+                      </p>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4 py-6">
