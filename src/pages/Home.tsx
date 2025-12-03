@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
+import { MostLikedProducts } from "@/components/MostLikedProducts";
 import { Hero } from "@/components/Hero";
 import { TrustBadges } from "@/components/TrustBadges";
 import { Testimonials } from "@/components/Testimonials";
@@ -97,6 +98,7 @@ export default function Home() {
         </section>
 
         <TopSellers />
+        <MostLikedProducts />
         <Testimonials />
       </main>
       <Footer />
