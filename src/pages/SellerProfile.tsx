@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Star, Calendar, Heart, Package } from "lucide-react";
@@ -18,6 +18,7 @@ interface SellerData {
   total_sales: number;
   average_rating: number;
   created_at: string;
+  avatar_url: string | null;
 }
 
 interface SellerProduct {
@@ -46,7 +47,7 @@ const SellerProfile = () => {
       // Fetch seller profile
       const { data: sellerData, error: sellerError } = await supabase
         .from("seller_profiles")
-        .select("id, full_name, total_sales, average_rating, created_at")
+        .select("id, full_name, total_sales, average_rating, created_at, user_id")
         .eq("id", id)
         .eq("is_approved", true)
         .eq("is_suspended", false)
@@ -58,7 +59,17 @@ const SellerProfile = () => {
         return;
       }
 
-      setSeller(sellerData);
+      // Fetch avatar from profiles
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("id", sellerData.user_id)
+        .single();
+
+      setSeller({
+        ...sellerData,
+        avatar_url: profile?.avatar_url || null,
+      });
 
       // Fetch seller products
       const { data: productsData } = await supabase
@@ -154,6 +165,7 @@ const SellerProfile = () => {
             <CardContent className="relative pt-0">
               <div className="flex flex-col md:flex-row items-center md:items-end gap-6 -mt-12">
                 <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
+                  <AvatarImage src={seller.avatar_url || ""} alt={seller.full_name} />
                   <AvatarFallback className="text-2xl font-bold bg-primary text-primary-foreground">
                     {seller.full_name
                       .split(" ")
