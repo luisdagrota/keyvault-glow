@@ -265,10 +265,6 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
           }
 
           toast.success('🎉 Pagamento Aprovado!');
-          
-          if (typeof window !== 'undefined' && (window as any).Tawk_API) {
-            (window as any).Tawk_API.maximize();
-          }
 
           setTimeout(() => {
             onOpenChange(false);
