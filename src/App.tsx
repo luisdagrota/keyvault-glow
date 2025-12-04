@@ -16,6 +16,7 @@ import MyOrders from "./pages/MyOrders";
 import BecomeSeller from "./pages/BecomeSeller";
 import SellerDashboard from "./pages/SellerDashboard";
 import SellerProfile from "./pages/SellerProfile";
+import { DiscordButton } from "./components/DiscordButton";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <DiscordButton />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
