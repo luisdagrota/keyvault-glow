@@ -7,6 +7,7 @@ import { Testimonials } from "@/components/Testimonials";
 import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
 import { TopSellers } from "@/components/TopSellers";
+import { BannerCarousel } from "@/components/BannerCarousel";
 import { Product } from "@/types/product";
 import { fetchProducts } from "@/lib/googleSheets";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,6 +65,9 @@ export default function Home() {
       />
       <Header />
       <main className="flex-1">
+        <div className="container px-4 pt-6">
+          <BannerCarousel />
+        </div>
         <Hero />
         <TrustBadges />
         
