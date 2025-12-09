@@ -1,10 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Search, Menu, User, Store, Home, Package, Info, LogOut, HelpCircle } from "lucide-react";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import { useState, FormEvent, useRef, useEffect } from "react";
 import logo from "@/assets/logo.png";
-import { SearchPreview } from "./SearchPreview";
+import { SmartSearch } from "./SmartSearch";
 import { supabase } from "@/integrations/supabase/client";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { NotificationBadge } from "./NotificationBadge";
@@ -22,8 +21,6 @@ import {
 
 export function Header() {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSeller, setIsSeller] = useState(false);
@@ -33,7 +30,6 @@ export function Header() {
   const [userName, setUserName] = useState<string>("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
 
   const ADMIN_EMAIL = "luisdagrota20@gmail.com";
 
@@ -209,33 +205,6 @@ export function Header() {
     };
   }, []);
 
-  const handleSearch = (e: FormEvent) => {
-    e.preventDefault();
-    setIsPreviewOpen(false);
-    setMobileSearchOpen(false);
-    if (searchTerm.trim()) {
-      navigate(`/products?search=${encodeURIComponent(searchTerm.trim())}`);
-    } else {
-      navigate('/products');
-    }
-  };
-
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-    setIsPreviewOpen(value.trim().length > 0);
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setIsPreviewOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setMobileMenuOpen(false);
@@ -274,26 +243,9 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-1 sm:gap-3">
-          {/* Desktop Search */}
-          <div ref={searchRef} className="hidden md:block relative">
-            <form onSubmit={handleSearch} className="flex items-center gap-2">
-              <Input
-                type="search"
-                placeholder="Buscar jogos..."
-                className="w-48 lg:w-64"
-                value={searchTerm}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                onFocus={() => searchTerm.trim() && setIsPreviewOpen(true)}
-              />
-              <Button type="submit" size="icon" variant="ghost">
-                <Search className="h-4 w-4" />
-              </Button>
-            </form>
-            <SearchPreview
-              searchTerm={searchTerm}
-              isOpen={isPreviewOpen}
-              onClose={() => setIsPreviewOpen(false)}
-            />
+          {/* Desktop Search - Smart Search */}
+          <div className="hidden md:block">
+            <SmartSearch />
           </div>
 
           {/* Mobile Search Button */}
@@ -487,19 +439,7 @@ export function Header() {
       {/* Mobile Search Bar */}
       {mobileSearchOpen && (
         <div className="md:hidden border-t border-border p-3 bg-background">
-          <form onSubmit={handleSearch} className="flex items-center gap-2">
-            <Input
-              type="search"
-              placeholder="Buscar jogos..."
-              className="flex-1 h-11"
-              value={searchTerm}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              autoFocus
-            />
-            <Button type="submit" size="icon" className="h-11 w-11">
-              <Search className="h-5 w-5" />
-            </Button>
-          </form>
+          <SmartSearch />
         </div>
       )}
     </header>
