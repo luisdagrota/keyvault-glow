@@ -1,7 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShoppingCart, DollarSign, Package, TrendingUp, AlertCircle } from "lucide-react";
+import { ShoppingCart, DollarSign, Package, TrendingUp, AlertCircle, Flag, AlertTriangle, Users } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 
 interface DashboardProps {
   stats: {
@@ -14,13 +16,30 @@ interface DashboardProps {
   products: any[];
 }
 
-const COLORS = ['hsl(270 80% 60%)', 'hsl(142 76% 45%)', 'hsl(200 90% 55%)', 'hsl(38 92% 50%)'];
+interface ReportStats {
+  total: number;
+  pending: number;
+  confirmed: number;
+  dismissed: number;
+}
+
+interface WarningStats {
+  total: number;
+  sellersWithWarnings: number;
+  suspendedSellers: number;
+  topWarnedSellers: { name: string; count: number }[];
+}
+
+const COLORS = ['hsl(270 80% 60%)', 'hsl(142 76% 45%)', 'hsl(200 90% 55%)', 'hsl(38 92% 50%)', 'hsl(0 72% 51%)'];
 
 export function AdminDashboard({ stats, orders, products }: DashboardProps) {
   const [salesByDay, setSalesByDay] = useState<any[]>([]);
   const [topProducts, setTopProducts] = useState<any[]>([]);
   const [revenueByMonth, setRevenueByMonth] = useState<any[]>([]);
   const [lowStockProducts, setLowStockProducts] = useState<any[]>([]);
+  const [reportStats, setReportStats] = useState<ReportStats>({ total: 0, pending: 0, confirmed: 0, dismissed: 0 });
+  const [warningStats, setWarningStats] = useState<WarningStats>({ total: 0, sellersWithWarnings: 0, suspendedSellers: 0, topWarnedSellers: [] });
+  const [reportsOverTime, setReportsOverTime] = useState<any[]>([]);
 
   useEffect(() => {
     // Vendas por dia (últimos 7 dias)
@@ -82,12 +101,99 @@ export function AdminDashboard({ stats, orders, products }: DashboardProps) {
     // Produtos com estoque baixo (menos de 10 unidades)
     const lowStock = products.filter(p => p.stock < 10).slice(0, 5);
     setLowStockProducts(lowStock);
+
+    // Fetch report and warning stats
+    fetchReportStats();
+    fetchWarningStats();
   }, [orders, products]);
+
+  const fetchReportStats = async () => {
+    try {
+      const { data: reports } = await supabase
+        .from('seller_reports')
+        .select('status, created_at');
+
+      if (reports) {
+        const pending = reports.filter(r => r.status === 'pending').length;
+        const confirmed = reports.filter(r => r.status === 'confirmed').length;
+        const dismissed = reports.filter(r => r.status === 'dismissed').length;
+        
+        setReportStats({
+          total: reports.length,
+          pending,
+          confirmed,
+          dismissed
+        });
+
+        // Reports over last 7 days
+        const last7Days = Array.from({ length: 7 }, (_, i) => {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          return date.toISOString().split('T')[0];
+        }).reverse();
+
+        const reportsData = last7Days.map(date => {
+          const dayReports = reports.filter(r => r.created_at.startsWith(date));
+          return {
+            date: new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+            denuncias: dayReports.length
+          };
+        });
+        setReportsOverTime(reportsData);
+      }
+    } catch (error) {
+      console.error('Error fetching report stats:', error);
+    }
+  };
+
+  const fetchWarningStats = async () => {
+    try {
+      const { data: warnings } = await supabase
+        .from('seller_warnings')
+        .select('seller_id, seller_profiles(full_name)');
+
+      const { data: sellers } = await supabase
+        .from('seller_profiles')
+        .select('id, full_name, warning_count, is_suspended');
+
+      if (warnings && sellers) {
+        const sellersWithWarnings = sellers.filter(s => (s.warning_count || 0) > 0).length;
+        const suspendedSellers = sellers.filter(s => s.is_suspended).length;
+
+        // Top warned sellers
+        const warningCounts = warnings.reduce((acc: any, w: any) => {
+          const name = w.seller_profiles?.full_name || 'Desconhecido';
+          acc[name] = (acc[name] || 0) + 1;
+          return acc;
+        }, {});
+
+        const topWarnedSellers = Object.entries(warningCounts)
+          .map(([name, count]) => ({ name, count: count as number }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5);
+
+        setWarningStats({
+          total: warnings.length,
+          sellersWithWarnings,
+          suspendedSellers,
+          topWarnedSellers
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching warning stats:', error);
+    }
+  };
 
   const statusData = [
     { name: 'Aprovados', value: stats.approvedOrders },
     { name: 'Pendentes', value: stats.pendingOrders },
     { name: 'Outros', value: stats.totalOrders - stats.approvedOrders - stats.pendingOrders }
+  ];
+
+  const reportStatusData = [
+    { name: 'Pendentes', value: reportStats.pending },
+    { name: 'Confirmadas', value: reportStats.confirmed },
+    { name: 'Descartadas', value: reportStats.dismissed }
   ];
 
   return (
@@ -149,6 +255,65 @@ export function AdminDashboard({ stats, orders, products }: DashboardProps) {
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Pedidos aprovados/total
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Cards de Denúncias e Advertências */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="card-gaming border-destructive/30">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Denúncias</CardTitle>
+            <Flag className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{reportStats.total}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {reportStats.pending} pendentes
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="card-gaming border-yellow-500/30">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Advertências</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{warningStats.total}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {warningStats.sellersWithWarnings} vendedores advertidos
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="card-gaming border-destructive/50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Vendedores Suspensos</CardTitle>
+            <Users className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive">{warningStats.suspendedSellers}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Por 3+ advertências
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="card-gaming">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Taxa Confirmação</CardTitle>
+            <TrendingUp className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {reportStats.total > 0 
+                ? ((reportStats.confirmed / reportStats.total) * 100).toFixed(1) 
+                : 0}%
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Denúncias confirmadas
             </p>
           </CardContent>
         </Card>
@@ -259,6 +424,98 @@ export function AdminDashboard({ stats, orders, products }: DashboardProps) {
                 />
               </PieChart>
             </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Denúncias últimos 7 dias */}
+        <Card className="card-gaming border-destructive/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Flag className="h-5 w-5 text-destructive" />
+              Denúncias Últimos 7 Dias
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={reportsOverTime}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(240 8% 20%)" />
+                <XAxis dataKey="date" stroke="hsl(240 5% 65%)" />
+                <YAxis stroke="hsl(240 5% 65%)" allowDecimals={false} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(240 8% 8%)', 
+                    border: '1px solid hsl(240 8% 20%)',
+                    borderRadius: '0.5rem'
+                  }} 
+                />
+                <Bar dataKey="denuncias" fill="hsl(0 72% 51%)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Status das denúncias */}
+        <Card className="card-gaming">
+          <CardHeader>
+            <CardTitle>Status das Denúncias</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={reportStatusData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => percent > 0 ? `${name}: ${(percent * 100).toFixed(0)}%` : ''}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  <Cell fill="hsl(38 92% 50%)" />
+                  <Cell fill="hsl(0 72% 51%)" />
+                  <Cell fill="hsl(240 5% 65%)" />
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(240 8% 8%)', 
+                    border: '1px solid hsl(240 8% 20%)',
+                    borderRadius: '0.5rem'
+                  }} 
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Top vendedores advertidos */}
+        <Card className="card-gaming border-yellow-500/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              Vendedores Mais Advertidos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {warningStats.topWarnedSellers.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                Nenhuma advertência registrada 👍
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {warningStats.topWarnedSellers.map((seller, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg font-bold text-muted-foreground">#{index + 1}</span>
+                      <span className="font-medium">{seller.name}</span>
+                    </div>
+                    <Badge variant={seller.count >= 3 ? "destructive" : "secondary"}>
+                      {seller.count} advertência{seller.count !== 1 ? 's' : ''}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
