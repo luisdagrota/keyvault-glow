@@ -23,6 +23,8 @@ export interface SellerProfile {
   total_sales: number;
   average_rating: number;
   created_at: string;
+  banner_url: string | null;
+  bio: string | null;
 }
 
 const SellerDashboard = () => {
@@ -83,7 +85,11 @@ const SellerDashboard = () => {
       <SellerSidebar activeTab={activeTab} setActiveTab={setActiveTab} sellerId={sellerProfile.id} />
       
       <main className="flex-1 p-4 sm:p-6 overflow-auto pt-16 lg:pt-6">
-        {activeTab === "overview" && <SellerOverview seller={sellerProfile} />}
+        {activeTab === "overview" && <SellerOverview seller={sellerProfile} onProfileUpdate={() => {
+          supabase.from("seller_profiles").select("*").eq("id", sellerProfile.id).single().then(({ data }) => {
+            if (data) setSellerProfile(data);
+          });
+        }} />}
         {activeTab === "products" && <SellerProducts sellerId={sellerProfile.id} />}
         {activeTab === "sales" && <SellerSales sellerId={sellerProfile.id} />}
         {activeTab === "balance" && <SellerBalance seller={sellerProfile} />}

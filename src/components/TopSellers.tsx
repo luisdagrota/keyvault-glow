@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, ShoppingBag, TrendingUp, Loader2 } from "lucide-react";
+import { Star, ShoppingBag, TrendingUp, Loader2, Users } from "lucide-react";
 import { SellerBadges, calculateSellerBadges } from "@/components/seller/SellerBadges";
 
 interface TopSeller {
@@ -15,6 +15,7 @@ interface TopSeller {
   created_at: string;
   likes_count: number;
   avatar_url: string | null;
+  follower_count: number;
 }
 
 export const TopSellers = () => {
@@ -40,10 +41,14 @@ export const TopSellers = () => {
         return;
       }
 
-      // Get likes count and avatar for each seller
-      const sellersWithLikesAndAvatar = await Promise.all(
+      // Get likes count, avatar, and follower count for each seller
+      const sellersWithData = await Promise.all(
         (data || []).map(async (seller) => {
-          const [{ data: products }, { data: profile }] = await Promise.all([
+          const [
+            { data: products },
+            { data: profile },
+            { count: followerCount }
+          ] = await Promise.all([
             supabase
               .from("seller_products")
               .select("likes_count")
@@ -52,7 +57,11 @@ export const TopSellers = () => {
               .from("profiles")
               .select("avatar_url")
               .eq("id", seller.user_id)
-              .single()
+              .single(),
+            supabase
+              .from("seller_followers")
+              .select("*", { count: "exact", head: true })
+              .eq("seller_id", seller.id)
           ]);
 
           const totalLikes = products?.reduce((sum, p) => sum + (p.likes_count || 0), 0) || 0;
@@ -61,11 +70,12 @@ export const TopSellers = () => {
             ...seller,
             likes_count: totalLikes,
             avatar_url: profile?.avatar_url || null,
+            follower_count: followerCount || 0,
           };
         })
       );
 
-      setSellers(sellersWithLikesAndAvatar);
+      setSellers(sellersWithData);
       setLoading(false);
     };
 
@@ -117,50 +127,69 @@ export const TopSellers = () => {
             return (
               <Card
                 key={seller.id}
-                className={`relative overflow-hidden transition-all hover:scale-[1.02] sm:hover:scale-105 ${
+                className={`relative overflow-hidden transition-all duration-300 hover:scale-[1.02] sm:hover:scale-105 group ${
                   ranking === 1
-                    ? "border-yellow-500/50 shadow-lg shadow-yellow-500/20"
+                    ? "border-yellow-500/50 shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/30"
                     : ranking === 2
-                    ? "border-gray-400/50"
+                    ? "border-gray-400/50 hover:border-gray-300"
                     : ranking === 3
-                    ? "border-amber-600/50"
-                    : ""
+                    ? "border-amber-600/50 hover:border-amber-500"
+                    : "hover:border-primary/30"
                 }`}
               >
+                {/* Ranking Badge */}
                 {ranking <= 3 && (
                   <div
-                    className={`absolute top-0 right-0 px-2 sm:px-3 py-1 text-xs font-bold rounded-bl-lg ${
+                    className={`absolute top-0 right-0 px-2 sm:px-3 py-1 text-xs font-bold rounded-bl-lg z-10 ${
                       ranking === 1
-                        ? "bg-yellow-500 text-yellow-950"
+                        ? "bg-gradient-to-r from-yellow-400 to-amber-500 text-yellow-950"
                         : ranking === 2
-                        ? "bg-gray-400 text-gray-950"
-                        : "bg-amber-600 text-amber-950"
+                        ? "bg-gradient-to-r from-gray-300 to-gray-400 text-gray-950"
+                        : "bg-gradient-to-r from-amber-500 to-orange-500 text-amber-950"
                     }`}
                   >
                     #{ranking}
                   </div>
                 )}
 
+                {/* Glow effect for top 1 */}
+                {ranking === 1 && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 via-transparent to-yellow-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                )}
+
                 <CardContent className="pt-4 sm:pt-6 text-center">
-                  <Avatar className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-2 sm:mb-3 border-2 border-primary/20">
-                    <AvatarImage src={seller.avatar_url || ""} alt={seller.full_name} />
-                    <AvatarFallback className="text-base sm:text-lg font-bold bg-primary/10">
-                      {seller.full_name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .slice(0, 2)
-                        .toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-
-                  <h3 className="font-semibold text-sm sm:text-base mb-2 truncate px-2">{seller.full_name}</h3>
-
-                  <div className="flex justify-center mb-2 sm:mb-3">
-                    <SellerBadges badges={badges} size="sm" />
+                  <div className="relative inline-block mb-2 sm:mb-3">
+                    <Avatar className="h-14 w-14 sm:h-18 sm:w-18 mx-auto border-2 border-primary/20 ring-2 ring-background">
+                      <AvatarImage src={seller.avatar_url || ""} alt={seller.full_name} />
+                      <AvatarFallback className="text-lg sm:text-xl font-bold bg-primary/10">
+                        {seller.full_name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .slice(0, 2)
+                          .toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    {/* Badge on avatar */}
+                    {badges.length > 0 && (
+                      <div className="absolute -bottom-1 -right-1">
+                        <SellerBadges badges={badges.slice(0, 1)} size="sm" />
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex items-center justify-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
+                  <h3 className="font-semibold text-sm sm:text-base mb-1 truncate px-2">
+                    {seller.full_name}
+                  </h3>
+
+                  {/* Additional badges */}
+                  {badges.length > 1 && (
+                    <div className="flex justify-center mb-2">
+                      <SellerBadges badges={badges.slice(1, 4)} size="sm" />
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-center gap-3 sm:gap-4 text-xs text-muted-foreground mb-3 sm:mb-4">
                     <span className="flex items-center gap-1">
                       <ShoppingBag className="h-3 w-3 sm:h-4 sm:w-4" />
                       {seller.total_sales}
@@ -169,10 +198,14 @@ export const TopSellers = () => {
                       <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-yellow-400 text-yellow-400" />
                       {seller.average_rating.toFixed(1)}
                     </span>
+                    <span className="flex items-center gap-1">
+                      <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+                      {seller.follower_count}
+                    </span>
                   </div>
 
                   <Button
-                    variant="outline"
+                    variant={ranking === 1 ? "default" : "outline"}
                     size="sm"
                     className="w-full h-9 sm:h-10 text-sm"
                     onClick={() => navigate(`/seller/${seller.id}`)}
