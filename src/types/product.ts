@@ -8,6 +8,7 @@ export interface Product {
   stock: number;
   platform?: string;
   genre?: string;
+  sellerId?: string;
 }
 
 export interface CartItem extends Product {

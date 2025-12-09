@@ -17,6 +17,7 @@ import BecomeSeller from "./pages/BecomeSeller";
 import SellerDashboard from "./pages/SellerDashboard";
 import SellerProfile from "./pages/SellerProfile";
 import HowItWorks from "./pages/HowItWorks";
+import SellerProductDetail from "./pages/SellerProductDetail";
 import { DiscordButton } from "./components/DiscordButton";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/become-seller" element={<BecomeSeller />} />
           <Route path="/seller" element={<SellerDashboard />} />
           <Route path="/seller/:id" element={<SellerProfile />} />
+          <Route path="/seller-product/:id" element={<SellerProductDetail />} />
           <Route path="/pedido-concluido" element={<PedidoConcluido />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
