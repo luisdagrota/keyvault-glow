@@ -204,4 +204,13 @@ All colors MUST be HSL.
   .animate-spin-slow {
     animation: spin-slow 3s linear infinite;
   }
+
+  /* Hide scrollbar for horizontal scroll areas */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
