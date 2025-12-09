@@ -7,12 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Loader2, Package, User as UserIcon, MessageSquare, CheckCircle2, Star, Camera, Save, Flag } from "lucide-react";
+import { Loader2, Package, User as UserIcon, MessageSquare, CheckCircle2, Star, Camera, Save, Flag, Ticket } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { ReportSellerButton } from "@/components/ReportSellerButton";
+import { CustomerTickets } from "@/components/CustomerTickets";
 import {
   Dialog,
   DialogContent,
@@ -491,6 +492,22 @@ const Profile = () => {
                   })}
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Tickets de Suporte */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Ticket className="h-5 w-5" />
+                <CardTitle>Suporte</CardTitle>
+              </div>
+              <CardDescription>
+                Abra tickets para obter ajuda com seus pedidos
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CustomerTickets />
             </CardContent>
           </Card>
         </div>

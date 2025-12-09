@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.search-products]
 verify_jwt = false
+
+[functions.cleanup-old-tickets]
+verify_jwt = false
