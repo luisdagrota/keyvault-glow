@@ -121,6 +121,53 @@ export type Database = {
         }
         Relationships: []
       }
+      fraud_alerts: {
+        Row: {
+          admin_notes: string | null
+          alert_type: string
+          created_at: string
+          description: string
+          id: string
+          is_resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
+          seller_id: string
+          severity: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          alert_type: string
+          created_at?: string
+          description: string
+          id?: string
+          is_resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          seller_id: string
+          severity?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          alert_type?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          seller_id?: string
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fraud_alerts_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_chat_status: {
         Row: {
           created_at: string
@@ -521,11 +568,15 @@ export type Database = {
           bio: string | null
           birth_date: string
           cpf: string
+          cpf_change_count: number
           created_at: string
+          fraud_risk_level: string | null
           full_name: string
           id: string
           is_approved: boolean
           is_suspended: boolean
+          last_profile_change: string | null
+          original_cpf: string | null
           pending_balance: number
           pix_key: string
           total_sales: number
@@ -540,11 +591,15 @@ export type Database = {
           bio?: string | null
           birth_date: string
           cpf: string
+          cpf_change_count?: number
           created_at?: string
+          fraud_risk_level?: string | null
           full_name: string
           id?: string
           is_approved?: boolean
           is_suspended?: boolean
+          last_profile_change?: string | null
+          original_cpf?: string | null
           pending_balance?: number
           pix_key: string
           total_sales?: number
@@ -559,11 +614,15 @@ export type Database = {
           bio?: string | null
           birth_date?: string
           cpf?: string
+          cpf_change_count?: number
           created_at?: string
+          fraud_risk_level?: string | null
           full_name?: string
           id?: string
           is_approved?: boolean
           is_suspended?: boolean
+          last_profile_change?: string | null
+          original_cpf?: string | null
           pending_balance?: number
           pix_key?: string
           total_sales?: number

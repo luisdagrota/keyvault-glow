@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, ShoppingCart, FileText, Home, MessageSquare, Ticket, Star, Users, PackageCheck, Flag, Bell, LifeBuoy } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, FileText, Home, MessageSquare, Ticket, Star, Users, PackageCheck, Flag, Bell, LifeBuoy, ShieldAlert } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -27,6 +27,7 @@ export function AdminSidebar() {
   const [pendingSellerProducts, setPendingSellerProducts] = useState(0);
   const [pendingReports, setPendingReports] = useState(0);
   const [openTickets, setOpenTickets] = useState(0);
+  const [pendingFraudAlerts, setPendingFraudAlerts] = useState(0);
 
   useEffect(() => {
     loadNotifications();
@@ -66,6 +67,11 @@ export function AdminSidebar() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'support_tickets' },
+        () => loadNotifications()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'fraud_alerts' },
         () => loadNotifications()
       )
       .subscribe();
@@ -134,6 +140,14 @@ export function AdminSidebar() {
       .in('status', ['open', 'waiting_customer']);
 
     setOpenTickets(ticketsCount || 0);
+
+    // Load pending fraud alerts count
+    const { count: fraudCount } = await supabase
+      .from('fraud_alerts')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_resolved', false);
+
+    setPendingFraudAlerts(fraudCount || 0);
   };
 
   const menuItems = [
@@ -147,6 +161,7 @@ export function AdminSidebar() {
     { title: "Avaliações", url: "/admin/reviews", icon: Star, badge: pendingReviews },
     { title: "Vendedores", url: "/admin/sellers", icon: Users, badge: pendingSellers + pendingWithdrawals },
     { title: "Denúncias", url: "/admin/complaints", icon: Flag, badge: pendingReports },
+    { title: "Antifraude", url: "/admin/fraud", icon: ShieldAlert, badge: pendingFraudAlerts },
     { title: "Chats", url: "/admin/chats", icon: MessageSquare, badge: unreadChats },
     { title: "Relatórios", url: "/admin/reports", icon: FileText },
   ];
