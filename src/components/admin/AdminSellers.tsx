@@ -13,7 +13,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Check, X, Ban, DollarSign } from "lucide-react";
+import { Loader2, Check, X, Ban, DollarSign, AlertTriangle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 interface Seller {
   id: string;
@@ -28,6 +38,7 @@ interface Seller {
   total_sales: number;
   average_rating: number;
   created_at: string;
+  warning_count: number;
 }
 
 interface Withdrawal {
@@ -46,6 +57,10 @@ export const AdminSellers = () => {
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [warningDialogOpen, setWarningDialogOpen] = useState(false);
+  const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
+  const [warningReason, setWarningReason] = useState("");
+  const [submittingWarning, setSubmittingWarning] = useState(false);
   const { toast } = useToast();
 
   const fetchData = async () => {
@@ -58,7 +73,7 @@ export const AdminSellers = () => {
         .order("requested_at", { ascending: false }),
     ]);
 
-    if (sellersRes.data) setSellers(sellersRes.data);
+    if (sellersRes.data) setSellers(sellersRes.data as Seller[]);
     if (withdrawalsRes.data) setWithdrawals(withdrawalsRes.data as any);
     setLoading(false);
   };
@@ -66,6 +81,49 @@ export const AdminSellers = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const openWarningDialog = (seller: Seller) => {
+    setSelectedSeller(seller);
+    setWarningReason("");
+    setWarningDialogOpen(true);
+  };
+
+  const submitWarning = async () => {
+    if (!selectedSeller || !warningReason.trim()) {
+      toast({ title: "Digite o motivo da advertência", variant: "destructive" });
+      return;
+    }
+
+    setSubmittingWarning(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      const { error } = await supabase.from("seller_warnings").insert({
+        seller_id: selectedSeller.id,
+        admin_id: user.id,
+        reason: warningReason.trim(),
+      });
+
+      if (error) throw error;
+
+      // Create notification for seller
+      await supabase.from("seller_notifications").insert({
+        seller_id: selectedSeller.id,
+        type: "warning",
+        title: "⚠️ Você recebeu uma advertência",
+        message: warningReason.trim(),
+      });
+
+      toast({ title: "Advertência aplicada com sucesso!" });
+      setWarningDialogOpen(false);
+      fetchData();
+    } catch (error: any) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } finally {
+      setSubmittingWarning(false);
+    }
+  };
 
   const approveSeller = async (id: string) => {
     const { error } = await supabase
@@ -277,6 +335,7 @@ export const AdminSellers = () => {
                       <TableHead>Nome</TableHead>
                       <TableHead>Vendas</TableHead>
                       <TableHead>Avaliação</TableHead>
+                      <TableHead>Advertências</TableHead>
                       <TableHead>Saldo</TableHead>
                       <TableHead>Ações</TableHead>
                     </TableRow>
@@ -290,6 +349,11 @@ export const AdminSellers = () => {
                         <TableCell>{seller.total_sales}</TableCell>
                         <TableCell>{seller.average_rating.toFixed(1)} ⭐</TableCell>
                         <TableCell>
+                          <Badge variant={seller.warning_count > 0 ? "destructive" : "secondary"}>
+                            {seller.warning_count || 0}/3
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
                           <div className="text-sm">
                             <span className="text-yellow-500">
                               R$ {seller.pending_balance.toFixed(2)}
@@ -301,14 +365,25 @@ export const AdminSellers = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => toggleSuspension(seller)}
-                          >
-                            <Ban className="mr-1 h-4 w-4" />
-                            Suspender
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-yellow-600 border-yellow-600 hover:bg-yellow-600/10"
+                              onClick={() => openWarningDialog(seller)}
+                            >
+                              <AlertTriangle className="mr-1 h-4 w-4" />
+                              Advertir
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => toggleSuspension(seller)}
+                            >
+                              <Ban className="mr-1 h-4 w-4" />
+                              Suspender
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -332,6 +407,7 @@ export const AdminSellers = () => {
                     <TableRow>
                       <TableHead>Nome</TableHead>
                       <TableHead>Vendas</TableHead>
+                      <TableHead>Advertências</TableHead>
                       <TableHead>Saldo</TableHead>
                       <TableHead>Ações</TableHead>
                     </TableRow>
@@ -343,6 +419,11 @@ export const AdminSellers = () => {
                           {seller.full_name}
                         </TableCell>
                         <TableCell>{seller.total_sales}</TableCell>
+                        <TableCell>
+                          <Badge variant="destructive">
+                            {seller.warning_count || 0}/3
+                          </Badge>
+                        </TableCell>
                         <TableCell>
                           R$ {seller.available_balance.toFixed(2)}
                         </TableCell>
@@ -364,6 +445,59 @@ export const AdminSellers = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Warning Dialog */}
+      <Dialog open={warningDialogOpen} onOpenChange={setWarningDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              Aplicar Advertência
+            </DialogTitle>
+            <DialogDescription>
+              Advertir vendedor: <strong>{selectedSeller?.full_name}</strong>
+              <br />
+              Advertências atuais: {selectedSeller?.warning_count || 0}/3
+              {selectedSeller && (selectedSeller.warning_count || 0) >= 2 && (
+                <span className="block mt-2 text-destructive font-semibold">
+                  ⚠️ Esta advertência causará a suspensão automática da conta!
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <label className="text-sm font-medium mb-2 block">Motivo da Advertência</label>
+            <Textarea
+              placeholder="Descreva o motivo da advertência (ex: Não entregou o produto ao cliente)"
+              value={warningReason}
+              onChange={(e) => setWarningReason(e.target.value)}
+              rows={4}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setWarningDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={submitWarning}
+              disabled={submittingWarning || !warningReason.trim()}
+            >
+              {submittingWarning ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Aplicando...
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="mr-2 h-4 w-4" />
+                  Aplicar Advertência
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

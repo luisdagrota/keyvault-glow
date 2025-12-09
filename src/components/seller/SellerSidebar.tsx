@@ -11,7 +11,8 @@ import {
   ArrowLeft,
   Store,
   Menu,
-  Bell
+  Bell,
+  AlertTriangle
 } from "lucide-react";
 import {
   Sheet,
@@ -62,6 +63,7 @@ export const SellerSidebar = ({ activeTab, setActiveTab, sellerId }: SellerSideb
     { id: "products", label: "Meus Produtos", icon: Package },
     { id: "sales", label: "Minhas Vendas", icon: ShoppingCart },
     { id: "balance", label: "Saldo", icon: Wallet },
+    { id: "warnings", label: "Advertências", icon: AlertTriangle },
     { id: "notifications", label: "Notificações", icon: Bell, badge: unreadNotifications },
   ];
 
