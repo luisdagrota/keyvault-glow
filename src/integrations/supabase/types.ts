@@ -517,6 +517,7 @@ export type Database = {
           total_sales: number
           updated_at: string
           user_id: string
+          warning_count: number
         }
         Insert: {
           available_balance?: number
@@ -535,6 +536,7 @@ export type Database = {
           total_sales?: number
           updated_at?: string
           user_id: string
+          warning_count?: number
         }
         Update: {
           available_balance?: number
@@ -553,6 +555,7 @@ export type Database = {
           total_sales?: number
           updated_at?: string
           user_id?: string
+          warning_count?: number
         }
         Relationships: []
       }
@@ -612,6 +615,48 @@ export type Database = {
           },
           {
             foreignKeyName: "seller_sales_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_warnings: {
+        Row: {
+          admin_id: string
+          created_at: string
+          id: string
+          order_id: string | null
+          reason: string
+          seller_id: string
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          reason: string
+          seller_id: string
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          reason?: string
+          seller_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_warnings_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_warnings_seller_id_fkey"
             columns: ["seller_id"]
             isOneToOne: false
             referencedRelation: "seller_profiles"

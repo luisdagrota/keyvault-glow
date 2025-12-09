@@ -8,6 +8,7 @@ import { SellerProducts } from "@/components/seller/SellerProducts";
 import { SellerSales } from "@/components/seller/SellerSales";
 import { SellerBalance } from "@/components/seller/SellerBalance";
 import { SellerNotifications } from "@/components/seller/SellerNotifications";
+import { SellerWarnings } from "@/components/seller/SellerWarnings";
 
 export interface SellerProfile {
   id: string;
@@ -25,6 +26,7 @@ export interface SellerProfile {
   created_at: string;
   banner_url: string | null;
   bio: string | null;
+  warning_count: number;
 }
 
 const SellerDashboard = () => {
@@ -93,6 +95,7 @@ const SellerDashboard = () => {
         {activeTab === "products" && <SellerProducts sellerId={sellerProfile.id} />}
         {activeTab === "sales" && <SellerSales sellerId={sellerProfile.id} />}
         {activeTab === "balance" && <SellerBalance seller={sellerProfile} />}
+        {activeTab === "warnings" && <SellerWarnings seller={sellerProfile} />}
         {activeTab === "notifications" && <SellerNotifications sellerId={sellerProfile.id} />}
       </main>
     </div>
