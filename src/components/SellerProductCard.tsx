@@ -1,8 +1,9 @@
 import { Button } from "./ui/button";
-import { Package, ShoppingCart, User } from "lucide-react";
+import { Package, Eye, User } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "./ui/badge";
 import { LikeButton } from "./LikeButton";
+import { AddToCartButton } from "./AddToCartButton";
 
 interface SellerProduct {
   id: string;
@@ -40,40 +41,40 @@ export function SellerProductCard({ product }: SellerProductCardProps) {
             />
           ) : (
             <div className="w-full h-full bg-muted flex items-center justify-center">
-              <Package className="h-16 w-16 text-muted-foreground/30" />
+              <Package className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground/30" />
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
           {isOutOfStock && (
             <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-              <Badge variant="destructive" className="text-lg px-4 py-2">
+              <Badge variant="destructive" className="text-sm sm:text-lg px-3 py-1.5 sm:px-4 sm:py-2">
                 ESGOTADO
               </Badge>
             </div>
           )}
 
           {product.stock > 0 && product.stock < 5 && (
-            <Badge className="absolute top-3 right-3 bg-warning text-warning-foreground font-semibold">
+            <Badge className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-warning text-warning-foreground font-semibold text-xs sm:text-sm">
               Últimas {product.stock}!
             </Badge>
           )}
 
-          <Badge variant="outline" className="absolute top-3 left-3 bg-background/80">
+          <Badge variant="outline" className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-background/80 text-xs">
             Vendedor
           </Badge>
         </div>
       </div>
 
-      <div className="p-5 space-y-4">
+      <div className="p-4 sm:p-5 space-y-3 sm:space-y-4">
         <div
           className="cursor-pointer"
           onClick={() => navigate(`/seller-product/${product.id}`)}
         >
-          <h3 className="font-bold text-lg line-clamp-1 group-hover:text-primary transition-colors">
+          <h3 className="font-bold text-base sm:text-lg line-clamp-1 group-hover:text-primary transition-colors">
             {product.name}
           </h3>
-          <p className="text-sm text-muted-foreground line-clamp-2 mt-2 min-h-[40px]">
+          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mt-1 sm:mt-2 min-h-[32px] sm:min-h-[40px]">
             {product.description || "Sem descrição"}
           </p>
         </div>
@@ -84,12 +85,12 @@ export function SellerProductCard({ product }: SellerProductCardProps) {
           onClick={(e) => e.stopPropagation()}
         >
           <User className="h-3 w-3" />
-          <span>por {product.seller_name}</span>
+          <span className="truncate">por {product.seller_name}</span>
         </Link>
 
         <div className="flex items-center justify-between pt-2 border-t border-border/50">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-primary">
+          <div>
+            <span className="text-xl sm:text-2xl font-bold text-primary">
               R$ {product.price.toFixed(2)}
             </span>
           </div>
@@ -102,23 +103,30 @@ export function SellerProductCard({ product }: SellerProductCardProps) {
             />
             <Button
               size="sm"
-              variant={isOutOfStock ? "outline" : "default"}
-              disabled={isOutOfStock}
-              className="gap-2"
-              onClick={() => navigate(`/seller-product/${product.id}`)}
+              variant="ghost"
+              className="h-8 w-8 sm:h-9 sm:w-9 p-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/seller-product/${product.id}`);
+              }}
             >
-              {isOutOfStock ? (
-                <>
-                  <Package className="h-4 w-4" />
-                  Esgotado
-                </>
-              ) : (
-                <>
-                  <ShoppingCart className="h-4 w-4" />
-                  Comprar
-                </>
-              )}
+              <Eye className="h-4 w-4" />
             </Button>
+            <AddToCartButton
+              product={{
+                id: product.id,
+                name: product.name,
+                description: product.description || "",
+                price: product.price,
+                imageUrl: product.image_url || "",
+                stock: product.stock,
+                source: "seller",
+                sellerId: product.seller_id,
+                sellerName: product.seller_name,
+              }}
+              size="sm"
+              showText={false}
+            />
           </div>
         </div>
 

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Menu, User, Store, X, Home, Package, Info, LogOut, HelpCircle } from "lucide-react";
+import { Search, Menu, User, Store, X, Home, Package, Info, LogOut, HelpCircle, ShoppingCart } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useState, FormEvent, useRef, useEffect } from "react";
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { NotificationBadge } from "./NotificationBadge";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { CartButton } from "./CartButton";
 import {
   Sheet,
   SheetContent,
@@ -273,14 +274,14 @@ export function Header() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-1 sm:gap-3">
           {/* Desktop Search */}
           <div ref={searchRef} className="hidden md:block relative">
             <form onSubmit={handleSearch} className="flex items-center gap-2">
               <Input
                 type="search"
                 placeholder="Buscar jogos..."
-                className="w-64"
+                className="w-48 lg:w-64"
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 onFocus={() => searchTerm.trim() && setIsPreviewOpen(true)}
@@ -305,6 +306,9 @@ export function Header() {
           >
             <Search className="h-5 w-5" />
           </Button>
+
+          {/* Cart Button */}
+          <CartButton />
 
           {user ? (
             <div className="hidden sm:flex items-center gap-2">
@@ -393,6 +397,8 @@ export function Header() {
                 </Button>
 
                 <div className="h-px bg-border my-2" />
+
+                <CartButton variant="mobile" />
 
                 {user ? (
                   <>
