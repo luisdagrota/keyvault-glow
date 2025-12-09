@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Star, Calendar, Heart, Package, Users, ImageIcon } from "lucide-react";
 import { LikeButton } from "@/components/LikeButton";
 import { SellerBadges, calculateSellerBadges, SELLER_BADGES } from "@/components/seller/SellerBadges";
+import { SellerLevelBadge, calculateSellerLevel, getNextLevel, calculateXP } from "@/components/seller/SellerLevel";
 import { SEOHead } from "@/components/SEOHead";
 import { FollowButton } from "@/components/FollowButton";
 
@@ -156,6 +157,12 @@ const SellerProfile = () => {
     isTopLiked
   );
 
+  const sellerLevel = calculateSellerLevel(
+    seller.total_sales,
+    seller.average_rating,
+    ranking !== undefined && ranking <= 5
+  );
+
   const memberSince = new Date(seller.created_at);
   const daysSinceJoined = Math.floor(
     (new Date().getTime() - memberSince.getTime()) / (1000 * 60 * 60 * 24)
@@ -216,9 +223,22 @@ const SellerProfile = () => {
 
                   {/* Info Section */}
                   <div className="flex-1 min-w-0 pt-2 sm:pt-4">
-                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 break-words">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 break-words">
                       {seller.full_name}
                     </h1>
+                    
+                    {/* Seller Level */}
+                    <div className="mb-3 flex justify-center sm:justify-start">
+                      <SellerLevelBadge
+                        level={sellerLevel}
+                        size="lg"
+                        showLabel
+                        showProgress
+                        currentSales={seller.total_sales}
+                        currentRating={seller.average_rating}
+                        isTopSeller={ranking !== undefined && ranking <= 5}
+                      />
+                    </div>
                     
                     {/* Bio */}
                     {seller.bio && (
