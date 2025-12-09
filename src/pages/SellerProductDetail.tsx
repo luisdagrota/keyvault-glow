@@ -45,6 +45,7 @@ export default function SellerProductDetail() {
   const [product, setProduct] = useState<SellerProduct | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [reviewStats, setReviewStats] = useState<{ avgRating: number; count: number }>({ avgRating: 0, count: 0 });
 
   // Determine if we're using slug or id route
   const isSlugRoute = location.pathname.startsWith("/produto/");
@@ -79,6 +80,20 @@ export default function SellerProductDetail() {
 
       if (error) throw error;
       setProduct(data);
+
+      // Fetch review statistics for SEO
+      if (data) {
+        const { data: reviews } = await supabase
+          .from("product_reviews")
+          .select("rating")
+          .eq("product_id", data.id)
+          .eq("is_approved", true);
+        
+        if (reviews && reviews.length > 0) {
+          const avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+          setReviewStats({ avgRating, count: reviews.length });
+        }
+      }
     } catch (error) {
       console.error("Error loading product:", error);
       setProduct(null);
@@ -156,6 +171,19 @@ export default function SellerProductDetail() {
     ? `${window.location.origin}/produto/${product.slug}`
     : window.location.href;
 
+  // Breadcrumbs for SEO
+  const breadcrumbs = [
+    { name: "Home", url: window.location.origin },
+    { name: "Produtos", url: `${window.location.origin}/products` },
+    ...(product.category ? [{ name: product.category, url: `${window.location.origin}/products?category=${encodeURIComponent(product.category)}` }] : []),
+    { name: product.name, url: canonicalUrl }
+  ];
+
+  // Seller URL for SEO
+  const sellerUrl = product.seller_profiles 
+    ? `${window.location.origin}/seller/${product.seller_profiles.id}`
+    : undefined;
+
   return (
     <div className="min-h-screen flex flex-col">
       <SEOHead
@@ -168,6 +196,13 @@ export default function SellerProductDetail() {
         keywords={product.tags || []}
         category={product.category || undefined}
         stock={product.stock}
+        sellerName={product.seller_profiles?.full_name}
+        sellerUrl={sellerUrl}
+        rating={reviewStats.count > 0 ? reviewStats.avgRating : undefined}
+        reviewCount={reviewStats.count > 0 ? reviewStats.count : undefined}
+        sku={product.id}
+        brand={product.category || "GameKeys"}
+        breadcrumbs={breadcrumbs}
       />
       <Header />
       <main className="flex-1 py-12">
