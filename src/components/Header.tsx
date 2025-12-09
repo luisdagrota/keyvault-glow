@@ -11,6 +11,7 @@ import { NotificationBadge } from "./NotificationBadge";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { CartButton } from "./CartButton";
 import { ThemeToggle } from "./ThemeToggle";
+import { UserNotifications } from "./UserNotifications";
 import {
   Sheet,
   SheetContent,
@@ -310,6 +311,9 @@ export function Header() {
 
           {/* Cart Button */}
           <CartButton />
+
+          {/* User Notifications */}
+          {user && <UserNotifications />}
 
           {/* Theme Toggle */}
           <ThemeToggle />
