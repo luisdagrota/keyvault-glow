@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, ShoppingCart, FileText, Home, MessageSquare, Ticket, Star, Users, PackageCheck, Flag } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, FileText, Home, MessageSquare, Ticket, Star, Users, PackageCheck, Flag, Bell } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -124,6 +124,7 @@ export function AdminSidebar() {
 
   const menuItems = [
     { title: "Dashboard", url: "/admin", icon: LayoutDashboard, end: true },
+    { title: "Notificações", url: "/admin/notifications", icon: Bell },
     { title: "Produtos", url: "/admin/products", icon: Package },
     { title: "Produtos Vendedores", url: "/admin/seller-products", icon: PackageCheck, badge: pendingSellerProducts },
     { title: "Pedidos", url: "/admin/orders", icon: ShoppingCart },
