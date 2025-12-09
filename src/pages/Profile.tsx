@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { ReportSellerButton } from "@/components/ReportSellerButton";
 import { CustomerTickets } from "@/components/CustomerTickets";
+import { BuyerReputation } from "@/components/BuyerReputation";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +26,9 @@ import {
 interface Profile {
   full_name: string;
   avatar_url: string | null;
+  buyer_rating: number | null;
+  total_purchases: number | null;
+  total_ratings_received: number | null;
 }
 
 interface Order {
@@ -86,7 +90,7 @@ const Profile = () => {
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("full_name, avatar_url")
+      .select("full_name, avatar_url, buyer_rating, total_purchases, total_ratings_received")
       .eq("id", userId)
       .single();
 
@@ -262,9 +266,18 @@ const Profile = () => {
                       <Camera className="h-6 w-6 text-white" />
                     </button>
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <CardTitle className="text-2xl">{profile?.full_name}</CardTitle>
                     <CardDescription>{user?.email}</CardDescription>
+                    {profile && (
+                      <BuyerReputation
+                        rating={profile.buyer_rating ?? 5}
+                        totalPurchases={profile.total_purchases ?? 0}
+                        totalRatings={profile.total_ratings_received ?? 0}
+                        size="sm"
+                        className="mt-2"
+                      />
+                    )}
                   </div>
                 </div>
                 <Button variant="outline" onClick={handleLogout}>

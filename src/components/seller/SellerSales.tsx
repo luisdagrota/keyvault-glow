@@ -2,12 +2,16 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle } from "lucide-react";
+import { BuyerReputationCompact } from "@/components/BuyerReputation";
+import { BuyerReviewForm } from "@/components/BuyerReviewForm";
 
 interface Sale {
   id: string;
   product_name: string;
   buyer_name: string;
+  buyer_id: string | null;
+  buyer_email: string;
   sale_amount: number;
   fee_amount: number;
   net_amount: number;
@@ -16,32 +20,70 @@ interface Sale {
   balance_released_at: string | null;
 }
 
+interface BuyerProfile {
+  id: string;
+  buyer_rating: number;
+  total_purchases: number;
+}
+
+interface BuyerReview {
+  order_id: string;
+}
+
 interface SellerSalesProps {
   sellerId: string;
 }
 
 export const SellerSales = ({ sellerId }: SellerSalesProps) => {
   const [sales, setSales] = useState<Sale[]>([]);
+  const [buyerProfiles, setBuyerProfiles] = useState<Record<string, BuyerProfile>>({});
+  const [existingReviews, setExistingReviews] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
+  const fetchData = async () => {
+    // Fetch sales
+    const { data: salesData, error: salesError } = await supabase
+      .from("seller_sales")
+      .select("*")
+      .eq("seller_id", sellerId)
+      .order("created_at", { ascending: false });
+
+    if (salesError) {
+      console.error("Error fetching sales:", salesError);
+      return;
+    }
+
+    setSales(salesData || []);
+
+    // Get unique buyer IDs
+    const buyerIds = [...new Set((salesData || []).map(s => s.buyer_id).filter(Boolean))];
+    
+    if (buyerIds.length > 0) {
+      // Fetch buyer profiles
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("id, buyer_rating, total_purchases")
+        .in("id", buyerIds);
+      
+      const profilesMap: Record<string, BuyerProfile> = {};
+      (profilesData || []).forEach(p => {
+        profilesMap[p.id] = p;
+      });
+      setBuyerProfiles(profilesMap);
+    }
+
+    // Fetch existing reviews from this seller
+    const { data: reviewsData } = await supabase
+      .from("buyer_reviews")
+      .select("order_id")
+      .eq("seller_id", sellerId);
+    
+    setExistingReviews(new Set((reviewsData || []).map(r => r.order_id)));
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchSales = async () => {
-      const { data, error } = await supabase
-        .from("seller_sales")
-        .select("*")
-        .eq("seller_id", sellerId)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Error fetching sales:", error);
-        return;
-      }
-
-      setSales(data || []);
-      setLoading(false);
-    };
-
-    fetchSales();
+    fetchData();
   }, [sellerId]);
 
   const getStatusBadge = (status: string, releasedAt: string | null) => {
@@ -84,43 +126,78 @@ export const SellerSales = ({ sellerId }: SellerSalesProps) => {
         </Card>
       ) : (
         <div className="space-y-3">
-          {sales.map((sale) => (
-            <Card key={sale.id}>
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="space-y-1">
-                    <h3 className="font-medium text-sm sm:text-base truncate">
-                      {sale.product_name}
-                    </h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      Cliente: {sale.buyer_name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(sale.created_at).toLocaleDateString("pt-BR")}
-                    </p>
+          {sales.map((sale) => {
+            const buyerProfile = sale.buyer_id ? buyerProfiles[sale.buyer_id] : null;
+            const hasReviewed = existingReviews.has(sale.id);
+            
+            return (
+              <Card key={sale.id}>
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="space-y-1">
+                        <h3 className="font-medium text-sm sm:text-base truncate">
+                          {sale.product_name}
+                        </h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs sm:text-sm text-muted-foreground">
+                            Cliente: {sale.buyer_name}
+                          </span>
+                          {buyerProfile && (
+                            <BuyerReputationCompact 
+                              rating={buyerProfile.buyer_rating ?? 5} 
+                              totalPurchases={buyerProfile.total_purchases ?? 0} 
+                            />
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(sale.created_at).toLocaleDateString("pt-BR")}
+                        </p>
+                      </div>
+                      
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+                        <div className="flex flex-col items-start sm:items-end">
+                          <span className="text-muted-foreground">Bruto</span>
+                          <span className="font-medium">R$ {sale.sale_amount.toFixed(2)}</span>
+                        </div>
+                        <div className="flex flex-col items-start sm:items-end">
+                          <span className="text-muted-foreground">Taxa</span>
+                          <span className="text-destructive">- R$ {sale.fee_amount.toFixed(2)}</span>
+                        </div>
+                        <div className="flex flex-col items-start sm:items-end">
+                          <span className="text-muted-foreground">Líquido</span>
+                          <span className="text-green-500 font-medium">R$ {sale.net_amount.toFixed(2)}</span>
+                        </div>
+                        <div>
+                          {getStatusBadge(sale.status, sale.balance_released_at)}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Buyer Review Section */}
+                    {sale.status === 'approved' && sale.buyer_id && (
+                      <div className="flex items-center justify-end border-t pt-3 mt-1">
+                        {hasReviewed ? (
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <CheckCircle size={14} className="text-green-500" />
+                            Cliente avaliado
+                          </span>
+                        ) : (
+                          <BuyerReviewForm
+                            orderId={sale.id}
+                            buyerId={sale.buyer_id}
+                            buyerName={sale.buyer_name}
+                            sellerId={sellerId}
+                            onReviewSubmitted={fetchData}
+                          />
+                        )}
+                      </div>
+                    )}
                   </div>
-                  
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
-                    <div className="flex flex-col items-start sm:items-end">
-                      <span className="text-muted-foreground">Bruto</span>
-                      <span className="font-medium">R$ {sale.sale_amount.toFixed(2)}</span>
-                    </div>
-                    <div className="flex flex-col items-start sm:items-end">
-                      <span className="text-muted-foreground">Taxa</span>
-                      <span className="text-destructive">- R$ {sale.fee_amount.toFixed(2)}</span>
-                    </div>
-                    <div className="flex flex-col items-start sm:items-end">
-                      <span className="text-muted-foreground">Líquido</span>
-                      <span className="text-green-500 font-medium">R$ {sale.net_amount.toFixed(2)}</span>
-                    </div>
-                    <div>
-                      {getStatusBadge(sale.status, sale.balance_released_at)}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
