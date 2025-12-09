@@ -154,7 +154,7 @@ export const TopSellers = () => {
 
                 {/* Glow effect for top 1 */}
                 {ranking === 1 && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 via-transparent to-yellow-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 via-transparent to-yellow-500/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                 )}
 
                 <CardContent className="pt-4 sm:pt-6 text-center">
