@@ -175,6 +175,8 @@ export type Database = {
           product_id: string
           product_name: string
           product_price: number
+          seller_id: string | null
+          seller_name: string | null
           ticket_url: string | null
           transaction_amount: number
           updated_at: string
@@ -195,6 +197,8 @@ export type Database = {
           product_id: string
           product_name: string
           product_price: number
+          seller_id?: string | null
+          seller_name?: string | null
           ticket_url?: string | null
           transaction_amount: number
           updated_at?: string
@@ -215,12 +219,22 @@ export type Database = {
           product_id?: string
           product_name?: string
           product_price?: number
+          seller_id?: string | null
+          seller_name?: string | null
           ticket_url?: string | null
           transaction_amount?: number
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_reviews: {
         Row: {

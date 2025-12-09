@@ -14,6 +14,8 @@ interface PaymentRequest {
   customerName: string;
   paymentMethod: 'pix' | 'credit_card' | 'ticket';
   userId?: string;
+  sellerId?: string;
+  sellerName?: string;
   cardData?: {
     cardNumber: string;
     cardholderName: string;
@@ -92,7 +94,7 @@ serve(async (req) => {
     }
 
     // Salvar pedido no banco
-    const orderData = {
+    const orderData: any = {
       product_id: paymentRequest.productId,
       product_name: paymentRequest.productName,
       product_price: paymentRequest.productPrice,
@@ -105,7 +107,9 @@ serve(async (req) => {
       pix_qr_code: mpData.point_of_interaction?.transaction_data?.qr_code || null,
       pix_qr_code_base64: mpData.point_of_interaction?.transaction_data?.qr_code_base64 || null,
       ticket_url: mpData.transaction_details?.external_resource_url || null,
-      user_id: paymentRequest.userId || null
+      user_id: paymentRequest.userId || null,
+      seller_id: paymentRequest.sellerId || null,
+      seller_name: paymentRequest.sellerName || null
     };
 
     const { data: order, error: orderError } = await supabase

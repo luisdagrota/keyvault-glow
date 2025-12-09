@@ -185,6 +185,8 @@ export default function Checkout() {
           customerName,
           paymentMethod,
           userId: user?.id,
+          sellerId: firstItem.sellerId || null,
+          sellerName: firstItem.sellerName || null,
           couponCode: appliedCoupon?.code || null,
           discountAmount: discountAmount,
           ...(paymentMethod === 'credit_card' && {
