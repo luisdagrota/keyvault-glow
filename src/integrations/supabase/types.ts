@@ -58,6 +58,33 @@ export type Database = {
           },
         ]
       }
+      chat_typing_status: {
+        Row: {
+          id: string
+          is_typing: boolean
+          order_id: string
+          updated_at: string
+          user_id: string
+          user_type: string
+        }
+        Insert: {
+          id?: string
+          is_typing?: boolean
+          order_id: string
+          updated_at?: string
+          user_id: string
+          user_type: string
+        }
+        Update: {
+          id?: string
+          is_typing?: boolean
+          order_id?: string
+          updated_at?: string
+          user_id?: string
+          user_type?: string
+        }
+        Relationships: []
+      }
       coupons: {
         Row: {
           code: string
@@ -605,6 +632,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          link: string | null
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          link?: string | null
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          link?: string | null
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_product_likes: {
         Row: {

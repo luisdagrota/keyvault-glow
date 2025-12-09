@@ -1,13 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Send, Paperclip, Package, X } from "lucide-react";
+import { Send, Paperclip, Package, X, Image as ImageIcon, FileText, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useTypingIndicator } from "@/hooks/useTypingIndicator";
+import { TypingIndicator } from "./TypingIndicator";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 
 interface ChatMessage {
   id: string;
@@ -33,8 +38,11 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
   const [newMessage, setNewMessage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const { isOtherTyping, handleTyping, stopTyping } = useTypingIndicator(orderId, isAdmin);
 
   useEffect(() => {
     loadMessages();
@@ -112,6 +120,8 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
       return;
     }
 
+    stopTyping();
+
     let attachmentUrl = null;
     let attachmentName = null;
 
@@ -121,7 +131,7 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${orderId}/${Date.now()}.${fileExt}`;
 
-      const { error: uploadError, data: uploadData } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('chat-attachments')
         .upload(fileName, selectedFile);
 
@@ -182,6 +192,31 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
     });
   };
 
+  const formatDateGroup = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return 'Hoje';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return 'Ontem';
+    }
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
+  const isImageFile = (fileName: string | null) => {
+    if (!fileName) return false;
+    const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    return ext ? imageExts.includes(ext) : false;
+  };
+
   const [order, setOrder] = useState<any>(null);
 
   useEffect(() => {
@@ -220,6 +255,19 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
 
   const isDelivered = order?.payment_status === 'delivered';
 
+  // Group messages by date
+  const groupedMessages: { date: string; messages: ChatMessage[] }[] = [];
+  let currentDate = '';
+  messages.forEach(msg => {
+    const msgDate = new Date(msg.created_at).toDateString();
+    if (msgDate !== currentDate) {
+      currentDate = msgDate;
+      groupedMessages.push({ date: msg.created_at, messages: [msg] });
+    } else {
+      groupedMessages[groupedMessages.length - 1].messages.push(msg);
+    }
+  });
+
   if (isDelivered && !isAdmin) {
     return (
       <Card className="card-gaming flex flex-col h-[600px]">
@@ -239,139 +287,202 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
   }
 
   return (
-    <Card className="card-gaming flex flex-col h-[calc(100vh-200px)] sm:h-[600px] min-h-[400px] max-h-[700px]">
-      <CardHeader className="border-b border-border p-3 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <Package className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span className="truncate">Chat do Pedido {orderNumber}</span>
-            </CardTitle>
-            {customerName && (
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1">Cliente: {customerName}</p>
+    <>
+      <Card className="card-gaming flex flex-col h-[calc(100vh-200px)] sm:h-[600px] min-h-[400px] max-h-[700px]">
+        <CardHeader className="border-b border-border p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Package className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="truncate">Chat do Pedido {orderNumber}</span>
+              </CardTitle>
+              {customerName && (
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1">Cliente: {customerName}</p>
+              )}
+            </div>
+            {isAdmin && onMarkAsDelivered && (
+              <Button onClick={onMarkAsDelivered} variant="default" size="sm" className="w-full sm:w-auto mt-2 sm:mt-0 h-9">
+                Marcar como Entregue
+              </Button>
             )}
           </div>
-          {isAdmin && onMarkAsDelivered && (
-            <Button onClick={onMarkAsDelivered} variant="default" size="sm" className="w-full sm:w-auto mt-2 sm:mt-0 h-9">
-              Marcar como Entregue
-            </Button>
-          )}
-        </div>
-      </CardHeader>
+        </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
-        <ScrollArea className="flex-1 p-3 sm:p-4" ref={scrollRef}>
-          <div className="space-y-3 sm:space-y-4">
-            {messages.length === 0 && (
-              <div className="text-center text-muted-foreground py-6 sm:py-8 text-sm">
-                Nenhuma mensagem ainda. Inicie a conversa!
+        <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
+          <ScrollArea className="flex-1 p-3 sm:p-4" ref={scrollRef}>
+            <div className="space-y-3 sm:space-y-4">
+              {messages.length === 0 && (
+                <div className="text-center text-muted-foreground py-6 sm:py-8 text-sm">
+                  Nenhuma mensagem ainda. Inicie a conversa!
+                </div>
+              )}
+
+              {groupedMessages.map((group, groupIndex) => (
+                <div key={groupIndex} className="space-y-3">
+                  {/* Date separator */}
+                  <div className="flex items-center gap-3 my-4">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-xs text-muted-foreground px-2">
+                      {formatDateGroup(group.date)}
+                    </span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+
+                  {group.messages.map((msg) => {
+                    const isOwnMessage = isAdmin ? msg.sender_type === 'admin' : msg.sender_type === 'customer';
+                    const isImage = isImageFile(msg.attachment_name);
+                    
+                    return (
+                      <div
+                        key={msg.id}
+                        className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div className={`max-w-[85%] sm:max-w-[70%] ${isOwnMessage ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
+                          <Badge variant={msg.sender_type === 'admin' ? 'default' : 'secondary'} className="text-xs">
+                            {msg.sender_type === 'admin' ? 'ADM' : 'Cliente'}
+                          </Badge>
+                          
+                          <div
+                            className={`rounded-lg p-2 sm:p-3 text-sm ${
+                              isOwnMessage
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-muted text-foreground'
+                            }`}
+                          >
+                            {msg.message && <p className="break-words whitespace-pre-wrap">{msg.message}</p>}
+                            
+                            {msg.attachment_url && (
+                              <>
+                                {isImage ? (
+                                  <button
+                                    onClick={() => setPreviewImage(msg.attachment_url)}
+                                    className="mt-2 block rounded-md overflow-hidden hover:opacity-90 transition-opacity"
+                                  >
+                                    <img 
+                                      src={msg.attachment_url} 
+                                      alt={msg.attachment_name || 'Imagem'} 
+                                      className="max-w-full max-h-48 object-cover rounded-md"
+                                    />
+                                  </button>
+                                ) : (
+                                  <a
+                                    href={msg.attachment_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`flex items-center gap-2 mt-2 text-xs sm:text-sm p-2 rounded-md ${
+                                      isOwnMessage 
+                                        ? 'bg-primary-foreground/10 hover:bg-primary-foreground/20' 
+                                        : 'bg-background hover:bg-background/80'
+                                    } transition-colors`}
+                                  >
+                                    <FileText className="h-4 w-4 flex-shrink-0" />
+                                    <span className="flex-1 truncate">{msg.attachment_name || 'Anexo'}</span>
+                                    <Download className="h-3 w-3 flex-shrink-0" />
+                                  </a>
+                                )}
+                              </>
+                            )}
+                          </div>
+                          
+                          <span className="text-[10px] sm:text-xs text-muted-foreground">
+                            {new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+
+              {/* Typing indicator */}
+              <TypingIndicator 
+                isTyping={isOtherTyping} 
+                label={isAdmin ? "Cliente digitando" : "ADM digitando"} 
+              />
+            </div>
+          </ScrollArea>
+
+          <div className="border-t border-border p-3 sm:p-4 space-y-2">
+            {selectedFile && (
+              <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                {selectedFile.type.startsWith('image/') ? (
+                  <ImageIcon className="h-4 w-4 flex-shrink-0 text-primary" />
+                ) : (
+                  <Paperclip className="h-4 w-4 flex-shrink-0" />
+                )}
+                <span className="text-xs sm:text-sm flex-1 truncate">{selectedFile.name}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedFile(null)}
+                  className="h-8 w-8 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
             )}
 
-            {messages.map((msg) => {
-              const isOwnMessage = isAdmin ? msg.sender_type === 'admin' : msg.sender_type === 'customer';
+            <div className="flex gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                onChange={handleFileSelect}
+                accept=".txt,.pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx"
+              />
               
-              return (
-                <div
-                  key={msg.id}
-                  className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div className={`max-w-[85%] sm:max-w-[70%] ${isOwnMessage ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
-                    <Badge variant={msg.sender_type === 'admin' ? 'default' : 'secondary'} className="text-xs">
-                      {msg.sender_type === 'admin' ? 'ADM' : 'Cliente'}
-                    </Badge>
-                    
-                    <div
-                      className={`rounded-lg p-2 sm:p-3 text-sm ${
-                        isOwnMessage
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-foreground'
-                      }`}
-                    >
-                      {msg.message && <p className="break-words">{msg.message}</p>}
-                      
-                      {msg.attachment_url && (
-                        <a
-                          href={msg.attachment_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 mt-2 text-xs sm:text-sm underline hover:opacity-80"
-                        >
-                          <Paperclip className="h-3 w-3 sm:h-4 sm:w-4" />
-                          {msg.attachment_name || 'Anexo'}
-                        </a>
-                      )}
-                    </div>
-                    
-                    <span className="text-[10px] sm:text-xs text-muted-foreground">
-                      {formatTime(msg.created_at)}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </ScrollArea>
-
-        <div className="border-t border-border p-3 sm:p-4 space-y-2">
-          {selectedFile && (
-            <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
-              <Paperclip className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs sm:text-sm flex-1 truncate">{selectedFile.name}</span>
               <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedFile(null)}
-                className="h-8 w-8 p-0"
+                variant="outline"
+                size="icon"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="h-10 w-10 sm:h-10 sm:w-10 flex-shrink-0"
+                title="Anexar arquivo ou imagem"
               >
-                <X className="h-4 w-4" />
+                <Paperclip className="h-4 w-4" />
+              </Button>
+
+              <Textarea
+                value={newMessage}
+                onChange={(e) => {
+                  setNewMessage(e.target.value);
+                  handleTyping();
+                }}
+                placeholder="Digite sua mensagem..."
+                className="flex-1 min-h-[40px] max-h-[100px] sm:max-h-[120px] resize-none text-sm"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+              />
+
+              <Button
+                onClick={handleSendMessage}
+                disabled={uploading || (!newMessage.trim() && !selectedFile)}
+                size="icon"
+                className="h-10 w-10 sm:h-10 sm:w-10 flex-shrink-0"
+              >
+                <Send className="h-4 w-4" />
               </Button>
             </div>
-          )}
-
-          <div className="flex gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              onChange={handleFileSelect}
-              accept=".txt,.pdf,.jpg,.jpeg,.png,.doc,.docx"
-            />
-            
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="h-10 w-10 sm:h-10 sm:w-10 flex-shrink-0"
-            >
-              <Paperclip className="h-4 w-4" />
-            </Button>
-
-            <Textarea
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Digite sua mensagem..."
-              className="flex-1 min-h-[40px] max-h-[100px] sm:max-h-[120px] resize-none text-sm"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendMessage();
-                }
-              }}
-            />
-
-            <Button
-              onClick={handleSendMessage}
-              disabled={uploading || (!newMessage.trim() && !selectedFile)}
-              size="icon"
-              className="h-10 w-10 sm:h-10 sm:w-10 flex-shrink-0"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {/* Image Preview Dialog */}
+      <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
+        <DialogContent className="max-w-4xl p-2">
+          {previewImage && (
+            <img 
+              src={previewImage} 
+              alt="Preview" 
+              className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
