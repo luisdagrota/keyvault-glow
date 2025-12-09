@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Menu, User, Store, X, Home, Package, Info, LogOut } from "lucide-react";
+import { Search, Menu, User, Store, X, Home, Package, Info, LogOut, HelpCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useState, FormEvent, useRef, useEffect } from "react";
@@ -264,6 +264,9 @@ export function Header() {
             <Link to="/products" className="text-foreground/80 hover:text-foreground transition-colors">
               Produtos
             </Link>
+            <Link to="/how-it-works" className="text-foreground/80 hover:text-foreground transition-colors">
+              Como funciona
+            </Link>
             <Link to="/about" className="text-foreground/80 hover:text-foreground transition-colors">
               Sobre
             </Link>
@@ -371,6 +374,14 @@ export function Header() {
                 >
                   <Package className="h-5 w-5 mr-3" />
                   Produtos
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start h-12 text-base"
+                  onClick={() => handleNavigate("/how-it-works")}
+                >
+                  <HelpCircle className="h-5 w-5 mr-3" />
+                  Como funciona
                 </Button>
                 <Button
                   variant="ghost"
