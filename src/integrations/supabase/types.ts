@@ -50,6 +50,51 @@ export type Database = {
         }
         Relationships: []
       }
+      buyer_reviews: {
+        Row: {
+          buyer_id: string
+          comment: string | null
+          created_at: string
+          id: string
+          order_id: string
+          rating: number
+          seller_id: string
+        }
+        Insert: {
+          buyer_id: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          order_id: string
+          rating: number
+          seller_id: string
+        }
+        Update: {
+          buyer_id?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string
+          rating?: number
+          seller_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buyer_reviews_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           attachment_name: string | null
@@ -402,23 +447,32 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          buyer_rating: number | null
           created_at: string
           full_name: string
           id: string
+          total_purchases: number | null
+          total_ratings_received: number | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
+          buyer_rating?: number | null
           created_at?: string
           full_name: string
           id: string
+          total_purchases?: number | null
+          total_ratings_received?: number | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
+          buyer_rating?: number | null
           created_at?: string
           full_name?: string
           id?: string
+          total_purchases?: number | null
+          total_ratings_received?: number | null
           updated_at?: string
         }
         Relationships: []
