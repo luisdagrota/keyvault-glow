@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, ShoppingCart, FileText, Home, MessageSquare, Ticket, Star, Users, PackageCheck, Flag, Bell } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, FileText, Home, MessageSquare, Ticket, Star, Users, PackageCheck, Flag, Bell, LifeBuoy } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -26,6 +26,7 @@ export function AdminSidebar() {
   const [pendingWithdrawals, setPendingWithdrawals] = useState(0);
   const [pendingSellerProducts, setPendingSellerProducts] = useState(0);
   const [pendingReports, setPendingReports] = useState(0);
+  const [openTickets, setOpenTickets] = useState(0);
 
   useEffect(() => {
     loadNotifications();
@@ -60,6 +61,11 @@ export function AdminSidebar() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'seller_reports' },
+        () => loadNotifications()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'support_tickets' },
         () => loadNotifications()
       )
       .subscribe();
@@ -120,11 +126,20 @@ export function AdminSidebar() {
       .eq('status', 'pending');
 
     setPendingReports(reportsCount || 0);
+
+    // Load open tickets count
+    const { count: ticketsCount } = await supabase
+      .from('support_tickets')
+      .select('*', { count: 'exact', head: true })
+      .in('status', ['open', 'waiting_customer']);
+
+    setOpenTickets(ticketsCount || 0);
   };
 
   const menuItems = [
     { title: "Dashboard", url: "/admin", icon: LayoutDashboard, end: true },
     { title: "Notificações", url: "/admin/notifications", icon: Bell },
+    { title: "Tickets", url: "/admin/tickets", icon: LifeBuoy, badge: openTickets },
     { title: "Produtos", url: "/admin/products", icon: Package },
     { title: "Produtos Vendedores", url: "/admin/seller-products", icon: PackageCheck, badge: pendingSellerProducts },
     { title: "Pedidos", url: "/admin/orders", icon: ShoppingCart },
