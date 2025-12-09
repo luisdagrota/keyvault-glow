@@ -44,6 +44,7 @@ interface SellerProduct {
   likes_count: number;
   seller_id: string;
   seller_name: string;
+  slug?: string | null;
 }
 
 interface CombinedProduct {
@@ -58,6 +59,7 @@ interface CombinedProduct {
   likes_count?: number;
   seller_id?: string;
   seller_name?: string;
+  slug?: string | null;
 }
 
 export default function Products() {
@@ -87,7 +89,7 @@ export default function Products() {
       // Fetch seller products with seller names
       const { data: sellerProductsData } = await supabase
         .from("seller_products")
-        .select("id, name, description, price, category, image_url, stock, likes_count, seller_id")
+        .select("id, name, description, price, category, image_url, stock, likes_count, seller_id, slug")
         .eq("is_active", true);
 
       let sellerProducts: CombinedProduct[] = [];
@@ -118,6 +120,7 @@ export default function Products() {
             likes_count: p.likes_count,
             seller_id: p.seller_id,
             seller_name: sellerMap.get(p.seller_id) || "Vendedor",
+            slug: p.slug,
           }));
       }
 
@@ -397,7 +400,7 @@ export default function Products() {
                       }}
                     />
                   ) : (
-                    <SellerProductCard
+                  <SellerProductCard
                       key={`seller-${product.id}`}
                       product={{
                         id: product.id,
@@ -410,6 +413,7 @@ export default function Products() {
                         likes_count: product.likes_count || 0,
                         seller_id: product.seller_id || "",
                         seller_name: product.seller_name || "Vendedor",
+                        slug: product.slug,
                       }}
                     />
                   )

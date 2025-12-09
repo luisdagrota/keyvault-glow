@@ -48,6 +48,7 @@ const App = () => (
               <Route path="/seller" element={<SellerDashboard />} />
               <Route path="/seller/:id" element={<SellerProfile />} />
               <Route path="/seller-product/:id" element={<SellerProductDetail />} />
+              <Route path="/produto/:slug" element={<SellerProductDetail />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/pedido-concluido" element={<PedidoConcluido />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

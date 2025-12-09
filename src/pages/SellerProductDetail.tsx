@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
-import { useParams, Link, useSearchParams } from "react-router-dom";
+import { useParams, Link, useSearchParams, useLocation } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { ShoppingCart, Shield, Zap, ArrowLeft, Package, User } from "lucide-react";
+import { ShoppingCart, Shield, Zap, ArrowLeft, Package, User, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { CheckoutModal } from "@/components/CheckoutModal";
 import { ProductReviews } from "@/components/ProductReviews";
 import { ReviewForm } from "@/components/ReviewForm";
 import { SEOHead } from "@/components/SEOHead";
 import { LikeButton } from "@/components/LikeButton";
+import { RecommendedProducts } from "@/components/RecommendedProducts";
 import { Product } from "@/types/product";
 
 interface SellerProduct {
@@ -24,6 +25,9 @@ interface SellerProduct {
   stock: number;
   likes_count: number;
   seller_id: string;
+  slug: string | null;
+  meta_description: string | null;
+  tags: string[] | null;
   seller_profiles: {
     id: string;
     full_name: string;
@@ -33,20 +37,24 @@ interface SellerProduct {
 }
 
 export default function SellerProductDetail() {
-  const { id } = useParams<{ id: string }>();
+  const { id, slug } = useParams<{ id?: string; slug?: string }>();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const orderId = searchParams.get("orderId");
   const [product, setProduct] = useState<SellerProduct | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
+  // Determine if we're using slug or id route
+  const isSlugRoute = location.pathname.startsWith("/produto/");
+
   useEffect(() => {
     loadProduct();
-  }, [id]);
+  }, [id, slug]);
 
   const loadProduct = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("seller_products")
         .select(`
           *,
@@ -57,9 +65,16 @@ export default function SellerProductDetail() {
             total_sales
           )
         `)
-        .eq("id", id)
-        .eq("is_active", true)
-        .single();
+        .eq("is_active", true);
+
+      // Search by slug or id
+      if (isSlugRoute && slug) {
+        query = query.eq("slug", slug);
+      } else if (id) {
+        query = query.eq("id", id);
+      }
+
+      const { data, error } = await query.single();
 
       if (error) throw error;
       setProduct(data);
@@ -128,9 +143,17 @@ export default function SellerProductDetail() {
   }
 
   const isOutOfStock = product.stock === 0;
-  const seoDescription = product.description 
-    ? (product.description.length > 155 ? product.description.substring(0, 155) + "..." : product.description)
-    : `${product.name} - Compre agora na GameKeys Store`;
+  
+  // Use auto-generated meta description or fallback
+  const seoDescription = product.meta_description || 
+    (product.description 
+      ? (product.description.length > 155 ? product.description.substring(0, 155) + "..." : product.description)
+      : `${product.name} - Compre agora na GameKeys Store`);
+
+  // Generate canonical URL with slug
+  const canonicalUrl = product.slug 
+    ? `${window.location.origin}/produto/${product.slug}`
+    : window.location.href;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -140,7 +163,10 @@ export default function SellerProductDetail() {
         image={product.image_url || ""}
         type="product"
         price={product.price}
-        url={window.location.href}
+        url={canonicalUrl}
+        keywords={product.tags || []}
+        category={product.category || undefined}
+        stock={product.stock}
       />
       <Header />
       <main className="flex-1 py-12">
@@ -237,6 +263,22 @@ export default function SellerProductDetail() {
                 </div>
               </div>
 
+              {/* Tags SEO */}
+              {product.tags && product.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  <Tag className="h-4 w-4 text-muted-foreground" />
+                  {product.tags.map((tag, index) => (
+                    <Link 
+                      key={index} 
+                      to={`/products?search=${encodeURIComponent(tag)}`}
+                      className="text-xs px-2 py-1 bg-muted hover:bg-muted/80 rounded-full text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {tag}
+                    </Link>
+                  ))}
+                </div>
+              )}
+
               <div className="grid grid-cols-3 gap-4 py-6">
                 <div className="text-center p-4 rounded-lg bg-muted/50">
                   <Zap className="h-6 w-6 mx-auto mb-2 text-primary" />
@@ -303,16 +345,25 @@ export default function SellerProductDetail() {
           {/* Seção de avaliações */}
           <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
-              <ProductReviews productId={id || ""} />
+              <ProductReviews productId={product.id} />
             </div>
             {orderId && (
               <div>
                 <ReviewForm 
-                  productId={id || ""} 
+                  productId={product.id} 
                   orderId={orderId}
                 />
               </div>
             )}
+          </div>
+
+          {/* Produtos Recomendados */}
+          <div className="mt-12">
+            <RecommendedProducts 
+              currentProductId={product.id}
+              category={product.category}
+              tags={product.tags}
+            />
           </div>
         </div>
       </main>
