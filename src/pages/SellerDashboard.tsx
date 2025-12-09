@@ -7,6 +7,7 @@ import { SellerOverview } from "@/components/seller/SellerOverview";
 import { SellerProducts } from "@/components/seller/SellerProducts";
 import { SellerSales } from "@/components/seller/SellerSales";
 import { SellerBalance } from "@/components/seller/SellerBalance";
+import { SellerNotifications } from "@/components/seller/SellerNotifications";
 
 export interface SellerProfile {
   id: string;
@@ -79,13 +80,14 @@ const SellerDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
-      <SellerSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <SellerSidebar activeTab={activeTab} setActiveTab={setActiveTab} sellerId={sellerProfile.id} />
       
       <main className="flex-1 p-4 sm:p-6 overflow-auto pt-16 lg:pt-6">
         {activeTab === "overview" && <SellerOverview seller={sellerProfile} />}
         {activeTab === "products" && <SellerProducts sellerId={sellerProfile.id} />}
         {activeTab === "sales" && <SellerSales sellerId={sellerProfile.id} />}
         {activeTab === "balance" && <SellerBalance seller={sellerProfile} />}
+        {activeTab === "notifications" && <SellerNotifications sellerId={sellerProfile.id} />}
       </main>
     </div>
   );
