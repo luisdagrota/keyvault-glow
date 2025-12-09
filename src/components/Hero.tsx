@@ -32,9 +32,11 @@ export function Hero() {
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto h-12 sm:h-14 text-base">
-              Como Funciona
-            </Button>
+            <Link to="/how-it-works" className="w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto h-12 sm:h-14 text-base">
+                Como Funciona
+              </Button>
+            </Link>
           </div>
 
           <div className="flex flex-wrap justify-center gap-6 sm:gap-8 pt-6 sm:pt-8 text-sm">
