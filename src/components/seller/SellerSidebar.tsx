@@ -1,5 +1,8 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
   LayoutDashboard, 
   Package, 
@@ -7,7 +10,8 @@ import {
   Wallet, 
   ArrowLeft,
   Store,
-  Menu
+  Menu,
+  Bell
 } from "lucide-react";
 import {
   Sheet,
@@ -16,22 +20,49 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { useState } from "react";
 
 interface SellerSidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  sellerId: string;
 }
 
-export const SellerSidebar = ({ activeTab, setActiveTab }: SellerSidebarProps) => {
+export const SellerSidebar = ({ activeTab, setActiveTab, sellerId }: SellerSidebarProps) => {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+  useEffect(() => {
+    fetchUnreadCount();
+
+    const channel = supabase
+      .channel('seller-sidebar-notifications')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'seller_notifications' }, () => {
+        fetchUnreadCount();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sellerId]);
+
+  const fetchUnreadCount = async () => {
+    const { count } = await supabase
+      .from("seller_notifications")
+      .select("*", { count: "exact", head: true })
+      .eq("seller_id", sellerId)
+      .eq("is_read", false);
+
+    setUnreadNotifications(count || 0);
+  };
 
   const menuItems = [
     { id: "overview", label: "Dashboard", icon: LayoutDashboard },
     { id: "products", label: "Meus Produtos", icon: Package },
     { id: "sales", label: "Minhas Vendas", icon: ShoppingCart },
     { id: "balance", label: "Saldo", icon: Wallet },
+    { id: "notifications", label: "Notificações", icon: Bell, badge: unreadNotifications },
   ];
 
   const handleTabChange = (tab: string) => {
@@ -56,6 +87,11 @@ export const SellerSidebar = ({ activeTab, setActiveTab }: SellerSidebarProps) =
           >
             <item.icon className="mr-2 h-4 w-4" />
             {item.label}
+            {item.badge && item.badge > 0 && (
+              <Badge variant="destructive" className="ml-auto">
+                {item.badge > 9 ? "9+" : item.badge}
+              </Badge>
+            )}
           </Button>
         ))}
       </nav>
