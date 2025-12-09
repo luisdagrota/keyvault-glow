@@ -18,6 +18,7 @@ import { AdminSellerProducts } from "@/components/admin/AdminSellerProducts";
 import { AdminReportsQueue } from "@/components/admin/AdminReportsQueue";
 import { AdminSystemNotifications } from "@/components/admin/AdminSystemNotifications";
 import { AdminTickets } from "@/components/admin/AdminTickets";
+import { AdminFraud } from "@/components/admin/AdminFraud";
 
 interface Product {
   id: string;
@@ -217,6 +218,7 @@ const Admin = () => {
               <Route path="seller-products" element={<AdminSellerProducts />} />
               <Route path="chats" element={<AdminChats />} />
               <Route path="complaints" element={<AdminReportsQueue />} />
+              <Route path="fraud" element={<AdminFraud />} />
               <Route path="reports" element={
                 <AdminReports 
                   orders={orders} 
