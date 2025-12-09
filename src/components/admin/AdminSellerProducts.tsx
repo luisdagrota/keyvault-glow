@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Check, X, Search, Eye } from "lucide-react";
 import {
@@ -19,6 +21,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 
 interface SellerProduct {
@@ -44,6 +47,9 @@ export const AdminSellerProducts = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState<"all" | "pending" | "approved">("pending");
   const [selectedProduct, setSelectedProduct] = useState<SellerProduct | null>(null);
+  const [rejectingProduct, setRejectingProduct] = useState<SellerProduct | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [isRejecting, setIsRejecting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -110,25 +116,40 @@ export const AdminSellerProducts = () => {
     fetchProducts();
   };
 
-  const rejectProduct = async (product: SellerProduct) => {
-    const { error: updateError } = await supabase
-      .from("seller_products")
-      .delete()
-      .eq("id", product.id);
+  const openRejectDialog = (product: SellerProduct) => {
+    setRejectingProduct(product);
+    setRejectReason("");
+  };
 
-    if (updateError) {
-      toast({ title: "Erro ao rejeitar", description: updateError.message, variant: "destructive" });
+  const confirmReject = async () => {
+    if (!rejectingProduct) return;
+    
+    if (!rejectReason.trim()) {
+      toast({ title: "Informe o motivo da rejeição", variant: "destructive" });
       return;
     }
 
-    // Create notification for seller (without product_id since it's deleted)
+    setIsRejecting(true);
+
+    const { error: updateError } = await supabase
+      .from("seller_products")
+      .delete()
+      .eq("id", rejectingProduct.id);
+
+    if (updateError) {
+      toast({ title: "Erro ao rejeitar", description: updateError.message, variant: "destructive" });
+      setIsRejecting(false);
+      return;
+    }
+
+    // Create notification for seller with the reason
     const { error: notifError } = await supabase
       .from("seller_notifications")
       .insert({
-        seller_id: product.seller_id,
+        seller_id: rejectingProduct.seller_id,
         type: "product_rejected",
         title: "Produto Rejeitado ❌",
-        message: `Seu produto "${product.name}" foi rejeitado. Por favor, revise as diretrizes e tente novamente.`,
+        message: `Seu produto "${rejectingProduct.name}" foi rejeitado.\n\nMotivo: ${rejectReason.trim()}`,
         product_id: null,
       });
 
@@ -137,6 +158,9 @@ export const AdminSellerProducts = () => {
     }
 
     toast({ title: "Produto rejeitado" });
+    setRejectingProduct(null);
+    setRejectReason("");
+    setIsRejecting(false);
     fetchProducts();
   };
 
@@ -281,7 +305,7 @@ export const AdminSellerProducts = () => {
                             <Button
                               variant="destructive"
                               size="icon"
-                              onClick={() => rejectProduct(product)}
+                              onClick={() => openRejectDialog(product)}
                             >
                               <X className="h-4 w-4" />
                             </Button>
@@ -362,7 +386,7 @@ export const AdminSellerProducts = () => {
                     variant="destructive"
                     className="flex-1"
                     onClick={() => {
-                      rejectProduct(selectedProduct);
+                      openRejectDialog(selectedProduct);
                       setSelectedProduct(null);
                     }}
                   >
@@ -373,6 +397,48 @@ export const AdminSellerProducts = () => {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Reason Modal */}
+      <Dialog open={!!rejectingProduct} onOpenChange={() => setRejectingProduct(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rejeitar Produto</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Informe o motivo da rejeição do produto <strong>"{rejectingProduct?.name}"</strong>. 
+              O vendedor receberá esta mensagem para saber o que precisa corrigir.
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="rejectReason">Motivo da Rejeição</Label>
+              <Textarea
+                id="rejectReason"
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Ex: A imagem do produto está em baixa qualidade. Por favor, envie uma imagem mais nítida."
+                className="min-h-[100px]"
+                maxLength={500}
+              />
+              <p className="text-xs text-muted-foreground text-right">
+                {rejectReason.length}/500
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectingProduct(null)}>
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmReject}
+              disabled={isRejecting || !rejectReason.trim()}
+            >
+              {isRejecting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Confirmar Rejeição
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
