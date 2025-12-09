@@ -234,7 +234,7 @@ export function SmartSearch() {
                           <p className="text-xs text-muted-foreground">{product.category}</p>
                         </div>
                         <span className="text-sm font-bold text-primary whitespace-nowrap">
-                          R$ {product.price.toFixed(2)}
+                          R$ {(product.price ?? 0).toFixed(2)}
                         </span>
                       </div>
                     ))}
@@ -264,7 +264,7 @@ export function SmartSearch() {
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-                              {seller.average_rating.toFixed(1)}
+                              {(seller.average_rating ?? 0).toFixed(1)}
                             </span>
                             <span>•</span>
                             <span>{seller.total_sales} vendas</span>
@@ -297,7 +297,7 @@ export function SmartSearch() {
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium truncate">{product.name}</p>
-                          <p className="text-xs text-primary font-bold">R$ {product.price.toFixed(2)}</p>
+                          <p className="text-xs text-primary font-bold">R$ {(product.price ?? 0).toFixed(2)}</p>
                         </div>
                       </div>
                     ))}
