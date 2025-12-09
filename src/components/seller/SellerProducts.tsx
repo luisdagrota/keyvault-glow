@@ -29,7 +29,8 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Loader2, Zap, Hand } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Zap, Hand, Key } from "lucide-react";
+import { SellerProductKeys } from "./SellerProductKeys";
 
 interface Product {
   id: string;
@@ -55,6 +56,7 @@ export const SellerProducts = ({ sellerId }: SellerProductsProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [keysDialogProduct, setKeysDialogProduct] = useState<Product | null>(null);
   
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -404,6 +406,16 @@ export const SellerProducts = ({ sellerId }: SellerProductsProps) => {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
+                        {product.delivery_method === 'automatic' && (
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setKeysDialogProduct(product)}
+                            title="Gerenciar Chaves"
+                          >
+                            <Key className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="icon"
@@ -427,6 +439,20 @@ export const SellerProducts = ({ sellerId }: SellerProductsProps) => {
           </CardContent>
         </Card>
       )}
+
+      {/* Keys Management Dialog */}
+      <Dialog open={!!keysDialogProduct} onOpenChange={() => setKeysDialogProduct(null)}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
+          {keysDialogProduct && (
+            <SellerProductKeys
+              productId={keysDialogProduct.id}
+              productName={keysDialogProduct.name}
+              onClose={() => setKeysDialogProduct(null)}
+              onKeysUpdated={fetchProducts}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
