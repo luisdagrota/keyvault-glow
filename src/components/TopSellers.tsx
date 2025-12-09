@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, ShoppingBag, TrendingUp, Loader2, Users } from "lucide-react";
 import { SellerBadges, calculateSellerBadges } from "@/components/seller/SellerBadges";
+import { SellerLevelCompact, calculateSellerLevel } from "@/components/seller/SellerLevel";
 
 interface TopSeller {
   id: string;
@@ -123,6 +124,11 @@ export const TopSellers = () => {
               ranking <= 3 ? ranking : undefined,
               seller.id === topLikedSellerId
             );
+            const sellerLevel = calculateSellerLevel(
+              seller.total_sales,
+              seller.average_rating,
+              ranking <= 5
+            );
 
             return (
               <Card
@@ -181,6 +187,11 @@ export const TopSellers = () => {
                   <h3 className="font-semibold text-sm sm:text-base mb-1 truncate px-2">
                     {seller.full_name}
                   </h3>
+
+                  {/* Seller Level Badge */}
+                  <div className="flex justify-center mb-2">
+                    <SellerLevelCompact level={sellerLevel} />
+                  </div>
 
                   {/* Additional badges */}
                   {badges.length > 1 && (

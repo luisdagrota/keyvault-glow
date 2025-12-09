@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign, Package, Star, TrendingUp, Edit2, Image, Save, X, Eye } from "lucide-react";
+import { DollarSign, Package, Star, TrendingUp, Edit2, Image, Save, X, Eye, Gem } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SellerBadges, calculateSellerBadges } from "./SellerBadges";
+import { SellerLevelBadge, calculateSellerLevel, getNextLevel, SELLER_LEVELS } from "./SellerLevel";
 import type { SellerProfile } from "@/pages/SellerDashboard";
 import { useNavigate } from "react-router-dom";
 
@@ -47,6 +48,8 @@ export const SellerOverview = ({ seller, onProfileUpdate }: SellerOverviewProps)
   };
 
   const badges = calculateSellerBadges(seller);
+  const sellerLevel = calculateSellerLevel(seller.total_sales, seller.average_rating, false);
+  const nextLevel = getNextLevel(sellerLevel);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -157,6 +160,62 @@ export const SellerOverview = ({ seller, onProfileUpdate }: SellerOverviewProps)
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Seller Level Card */}
+      <Card className="overflow-hidden border-2" style={{ borderColor: sellerLevel.colors.glow }}>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Gem className="h-5 w-5 text-primary" />
+            Seu Nível de Vendedor
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+            <SellerLevelBadge
+              level={sellerLevel}
+              size="xl"
+              showLabel
+              showProgress
+              currentSales={seller.total_sales}
+              currentRating={seller.average_rating}
+              animated
+            />
+            
+            <div className="flex-1 space-y-2">
+              <p className="text-sm text-muted-foreground">
+                {sellerLevel.id === "diamond" 
+                  ? "🎉 Parabéns! Você alcançou o nível máximo!"
+                  : nextLevel 
+                    ? `Continue vendendo para alcançar o nível ${nextLevel.name}!`
+                    : "Continue vendendo para subir de nível!"
+                }
+              </p>
+              
+              {/* All levels preview */}
+              <div className="flex flex-wrap gap-2 pt-2">
+                {SELLER_LEVELS.map((lvl) => {
+                  const isActive = lvl.id === sellerLevel.id;
+                  const Icon = lvl.icon;
+                  return (
+                    <div
+                      key={lvl.id}
+                      className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs transition-all ${
+                        isActive 
+                          ? `bg-gradient-to-r ${lvl.colors.secondary} text-background font-semibold` 
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                      style={isActive ? { boxShadow: `0 0 12px ${lvl.colors.glow}` } : undefined}
+                    >
+                      <Icon className="h-3 w-3" />
+                      {lvl.name}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
