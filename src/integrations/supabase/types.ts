@@ -326,6 +326,27 @@ export type Database = {
         }
         Relationships: []
       }
+      seller_followers: {
+        Row: {
+          created_at: string
+          follower_id: string
+          id: string
+          seller_id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          id?: string
+          seller_id: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          id?: string
+          seller_id?: string
+        }
+        Relationships: []
+      }
       seller_notifications: {
         Row: {
           created_at: string
@@ -482,6 +503,8 @@ export type Database = {
         Row: {
           available_balance: number
           average_rating: number
+          banner_url: string | null
+          bio: string | null
           birth_date: string
           cpf: string
           created_at: string
@@ -498,6 +521,8 @@ export type Database = {
         Insert: {
           available_balance?: number
           average_rating?: number
+          banner_url?: string | null
+          bio?: string | null
           birth_date: string
           cpf: string
           created_at?: string
@@ -514,6 +539,8 @@ export type Database = {
         Update: {
           available_balance?: number
           average_rating?: number
+          banner_url?: string | null
+          bio?: string | null
           birth_date?: string
           cpf?: string
           created_at?: string

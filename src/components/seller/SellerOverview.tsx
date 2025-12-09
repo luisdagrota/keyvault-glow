@@ -1,24 +1,171 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Package, Star, TrendingUp } from "lucide-react";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { DollarSign, Package, Star, TrendingUp, Edit2, Image, Save, X, Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { SellerBadges, calculateSellerBadges } from "./SellerBadges";
 import type { SellerProfile } from "@/pages/SellerDashboard";
+import { useNavigate } from "react-router-dom";
 
 interface SellerOverviewProps {
   seller: SellerProfile;
+  onProfileUpdate?: () => void;
 }
 
-export const SellerOverview = ({ seller }: SellerOverviewProps) => {
+export const SellerOverview = ({ seller, onProfileUpdate }: SellerOverviewProps) => {
+  const navigate = useNavigate();
+  const [isEditing, setIsEditing] = useState(false);
+  const [bannerUrl, setBannerUrl] = useState(seller.banner_url || "");
+  const [bio, setBio] = useState(seller.bio || "");
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("seller_profiles")
+        .update({
+          banner_url: bannerUrl.trim() || null,
+          bio: bio.trim() || null,
+        })
+        .eq("id", seller.id);
+
+      if (error) throw error;
+
+      toast.success("Perfil atualizado!");
+      setIsEditing(false);
+      onProfileUpdate?.();
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error("Erro ao atualizar perfil");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const badges = calculateSellerBadges(seller);
+
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div>
-        <h1 className="text-xl sm:text-3xl font-bold">Olá, {seller.full_name}!</h1>
-        <p className="text-sm sm:text-base text-muted-foreground">Bem-vindo ao seu painel de vendedor</p>
-      </div>
+      {/* Welcome Section with Profile Edit */}
+      <Card className="overflow-hidden">
+        {/* Banner Preview */}
+        <div className="relative h-32 sm:h-40 overflow-hidden">
+          {bannerUrl || seller.banner_url ? (
+            <img
+              src={bannerUrl || seller.banner_url || ""}
+              alt="Banner"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-primary/30 via-primary/10 to-background" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+        </div>
 
+        <CardContent className="relative -mt-8 sm:-mt-10">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
+            <div className="flex-1">
+              <h1 className="text-xl sm:text-3xl font-bold">Olá, {seller.full_name}!</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                {seller.bio || "Bem-vindo ao seu painel de vendedor"}
+              </p>
+              
+              {badges.length > 0 && (
+                <div className="mt-3">
+                  <SellerBadges badges={badges} size="sm" />
+                </div>
+              )}
+            </div>
+            
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/seller/${seller.id}`)}
+                className="gap-2"
+              >
+                <Eye className="h-4 w-4" />
+                Ver Perfil Público
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditing(!isEditing)}
+                className="gap-2"
+              >
+                <Edit2 className="h-4 w-4" />
+                Editar
+              </Button>
+            </div>
+          </div>
+
+          {/* Edit Form */}
+          {isEditing && (
+            <div className="mt-6 p-4 rounded-lg border bg-muted/30 space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <Image className="h-4 w-4" />
+                  URL do Banner
+                </label>
+                <Input
+                  placeholder="https://exemplo.com/meu-banner.jpg"
+                  value={bannerUrl}
+                  onChange={(e) => setBannerUrl(e.target.value)}
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Recomendado: 1200x300 pixels
+                </p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Bio / Descrição</label>
+                <Textarea
+                  placeholder="Conte um pouco sobre você e seus produtos..."
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  rows={3}
+                  maxLength={300}
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {bio.length}/300 caracteres
+                </p>
+              </div>
+
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setBannerUrl(seller.banner_url || "");
+                    setBio(seller.bio || "");
+                  }}
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Cancelar
+                </Button>
+                <Button size="sm" onClick={handleSave} disabled={saving}>
+                  <Save className="h-4 w-4 mr-1" />
+                  {saving ? "Salvando..." : "Salvar"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Stats Grid */}
       <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
             <CardTitle className="text-xs sm:text-sm font-medium">Saldo a Liberar</CardTitle>
-            <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500" />
           </CardHeader>
           <CardContent className="p-3 sm:p-6 pt-0">
             <div className="text-lg sm:text-2xl font-bold text-yellow-500">
@@ -30,10 +177,10 @@ export const SellerOverview = ({ seller }: SellerOverviewProps) => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
             <CardTitle className="text-xs sm:text-sm font-medium">Saldo Liberado</CardTitle>
-            <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
           </CardHeader>
           <CardContent className="p-3 sm:p-6 pt-0">
             <div className="text-lg sm:text-2xl font-bold text-green-500">
@@ -45,10 +192,10 @@ export const SellerOverview = ({ seller }: SellerOverviewProps) => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
             <CardTitle className="text-xs sm:text-sm font-medium">Total de Vendas</CardTitle>
-            <Package className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            <Package className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
           </CardHeader>
           <CardContent className="p-3 sm:p-6 pt-0">
             <div className="text-lg sm:text-2xl font-bold">{seller.total_sales}</div>
@@ -58,10 +205,10 @@ export const SellerOverview = ({ seller }: SellerOverviewProps) => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
             <CardTitle className="text-xs sm:text-sm font-medium">Avaliação Média</CardTitle>
-            <Star className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400" />
           </CardHeader>
           <CardContent className="p-3 sm:p-6 pt-0">
             <div className="text-lg sm:text-2xl font-bold flex items-center gap-1">
@@ -75,20 +222,36 @@ export const SellerOverview = ({ seller }: SellerOverviewProps) => {
         </Card>
       </div>
 
+      {/* Tips Card */}
       <Card>
         <CardHeader className="p-4 sm:p-6">
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
+            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             Dicas para Vender Mais
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4 sm:p-6 pt-0">
           <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-muted-foreground">
-            <li>• Adicione descrições detalhadas aos seus produtos</li>
-            <li>• Use imagens de alta qualidade</li>
-            <li>• Mantenha preços competitivos</li>
-            <li>• Responda rapidamente aos clientes</li>
-            <li>• Entregue os produtos rapidamente para receber boas avaliações</li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary">•</span>
+              Adicione um banner e bio atraentes ao seu perfil
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary">•</span>
+              Use imagens de alta qualidade nos produtos
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary">•</span>
+              Mantenha preços competitivos
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary">•</span>
+              Responda rapidamente aos clientes
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary">•</span>
+              Entregue os produtos rapidamente para receber boas avaliações
+            </li>
           </ul>
         </CardContent>
       </Card>
