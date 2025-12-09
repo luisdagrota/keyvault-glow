@@ -1,8 +1,13 @@
+# GameKeys Store - Robots.txt
+# https://gamekeys.store
+
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 1
 
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 2
 
 User-agent: Twitterbot
 Allow: /
@@ -10,5 +15,32 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
 User-agent: *
 Allow: /
+Crawl-delay: 5
+
+# Sitemap
+Sitemap: https://gamekeys.store/sitemap.xml
+
+# Disallow admin and private pages
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /seller
+Disallow: /profile
+Disallow: /my-orders
+Disallow: /checkout
+Disallow: /pedido-concluido
+
+# Allow product and seller profile pages
+Allow: /product/*
+Allow: /seller-product/*
+Allow: /seller/*

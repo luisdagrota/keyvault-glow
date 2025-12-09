@@ -21,41 +21,44 @@ import SellerProductDetail from "./pages/SellerProductDetail";
 import Checkout from "./pages/Checkout";
 import { DiscordButton } from "./components/DiscordButton";
 import { CartProvider } from "./contexts/CartContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import { CartDrawer } from "./components/CartDrawer";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <CartProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/product/:id" element={<ProductDetail />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/how-it-works" element={<HowItWorks />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/my-orders" element={<MyOrders />} />
-            <Route path="/admin/*" element={<Admin />} />
-            <Route path="/become-seller" element={<BecomeSeller />} />
-            <Route path="/seller" element={<SellerDashboard />} />
-            <Route path="/seller/:id" element={<SellerProfile />} />
-            <Route path="/seller-product/:id" element={<SellerProductDetail />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/pedido-concluido" element={<PedidoConcluido />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <CartDrawer />
-          <DiscordButton />
-        </BrowserRouter>
-      </TooltipProvider>
-    </CartProvider>
+    <ThemeProvider>
+      <CartProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/product/:id" element={<ProductDetail />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/how-it-works" element={<HowItWorks />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/my-orders" element={<MyOrders />} />
+              <Route path="/admin/*" element={<Admin />} />
+              <Route path="/become-seller" element={<BecomeSeller />} />
+              <Route path="/seller" element={<SellerDashboard />} />
+              <Route path="/seller/:id" element={<SellerProfile />} />
+              <Route path="/seller-product/:id" element={<SellerProductDetail />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/pedido-concluido" element={<PedidoConcluido />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <CartDrawer />
+            <DiscordButton />
+          </BrowserRouter>
+        </TooltipProvider>
+      </CartProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

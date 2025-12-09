@@ -8,6 +8,62 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
+    /* Light Theme - Clean Gaming */
+    --background: 0 0% 98%;
+    --foreground: 240 10% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 10%;
+
+    /* Primary: Vibrant Purple */
+    --primary: 270 80% 55%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 270 90% 65%;
+
+    /* Secondary: Fresh Green */
+    --secondary: 142 70% 40%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-glow: 142 80% 50%;
+
+    --muted: 240 5% 92%;
+    --muted-foreground: 240 5% 40%;
+
+    /* Accent: Deep Blue */
+    --accent: 200 85% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 5% 85%;
+    --input: 240 5% 90%;
+    --ring: 270 80% 55%;
+
+    --radius: 0.75rem;
+
+    /* Custom Tokens */
+    --success: 142 70% 40%;
+    --warning: 38 92% 50%;
+    --info: 200 85% 50%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(270 80% 55%), hsl(270 90% 65%));
+    --gradient-secondary: linear-gradient(135deg, hsl(142 70% 40%), hsl(142 80% 50%));
+    --gradient-hero: linear-gradient(135deg, hsl(270 80% 55%) 0%, hsl(200 85% 50%) 100%);
+    
+    /* Shadows & Glows */
+    --shadow-glow-primary: 0 0 20px hsl(270 80% 55% / 0.3);
+    --shadow-glow-secondary: 0 0 20px hsl(142 70% 40% / 0.3);
+    --shadow-card: 0 4px 20px hsl(240 10% 10% / 0.08);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
     /* Gaming Dark Theme - Professional E-commerce */
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
@@ -42,8 +98,6 @@ All colors MUST be HSL.
     --input: 240 8% 15%;
     --ring: 270 80% 60%;
 
-    --radius: 0.75rem;
-
     /* Custom Gaming Tokens */
     --success: 142 76% 45%;
     --warning: 38 92% 50%;
@@ -58,9 +112,6 @@ All colors MUST be HSL.
     --shadow-glow-primary: 0 0 20px hsl(270 80% 60% / 0.4);
     --shadow-glow-secondary: 0 0 20px hsl(142 76% 45% / 0.4);
     --shadow-card: 0 8px 32px hsl(240 10% 3.9% / 0.8);
-    
-    /* Animations */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 

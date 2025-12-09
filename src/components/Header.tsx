@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Menu, User, Store, X, Home, Package, Info, LogOut, HelpCircle, ShoppingCart } from "lucide-react";
+import { Search, Menu, User, Store, Home, Package, Info, LogOut, HelpCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useState, FormEvent, useRef, useEffect } from "react";
@@ -10,6 +10,7 @@ import { User as SupabaseUser } from "@supabase/supabase-js";
 import { NotificationBadge } from "./NotificationBadge";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { CartButton } from "./CartButton";
+import { ThemeToggle } from "./ThemeToggle";
 import {
   Sheet,
   SheetContent,
@@ -310,6 +311,9 @@ export function Header() {
           {/* Cart Button */}
           <CartButton />
 
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
           {user ? (
             <div className="hidden sm:flex items-center gap-2">
               {isAdmin && (
@@ -399,6 +403,9 @@ export function Header() {
                 <div className="h-px bg-border my-2" />
 
                 <CartButton variant="mobile" />
+                <ThemeToggle variant="mobile" />
+
+                <div className="h-px bg-border my-2" />
 
                 {user ? (
                   <>
