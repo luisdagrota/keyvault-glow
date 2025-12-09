@@ -355,24 +355,34 @@ const Profile = () => {
                           {getStatusBadge(order.payment_status)}
                         </div>
                         
-                        <div className="flex justify-between items-center">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                           <p className="text-sm text-muted-foreground">
                             {new Date(order.created_at).toLocaleDateString("pt-BR")}
                           </p>
-                          <Button
-                            onClick={() => setSelectedOrder(order)}
-                            variant={unreadCount > 0 ? "default" : "outline"}
-                            size="sm"
-                            className="gap-2"
-                          >
-                            <MessageSquare className="h-4 w-4" />
-                            Abrir Chat
-                            {unreadCount > 0 && (
-                              <Badge variant="destructive" className="ml-1">
-                                {unreadCount}
-                              </Badge>
+                          <div className="flex gap-2 w-full sm:w-auto">
+                            {order.seller_id && order.payment_status === 'approved' && (
+                              <ReportSellerButton
+                                orderId={order.id}
+                                sellerId={order.seller_id}
+                                sellerName={order.seller_name || "Vendedor"}
+                                productName={order.product_name}
+                              />
                             )}
-                          </Button>
+                            <Button
+                              onClick={() => setSelectedOrder(order)}
+                              variant={unreadCount > 0 ? "default" : "outline"}
+                              size="sm"
+                              className="gap-2 flex-1 sm:flex-none"
+                            >
+                              <MessageSquare className="h-4 w-4" />
+                              Abrir Chat
+                              {unreadCount > 0 && (
+                                <Badge variant="destructive" className="ml-1">
+                                  {unreadCount}
+                                </Badge>
+                              )}
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     );
