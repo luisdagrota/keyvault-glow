@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, ShoppingCart, FileText, Home, MessageSquare, Ticket, Star, Users, PackageCheck } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, FileText, Home, MessageSquare, Ticket, Star, Users, PackageCheck, Flag } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -25,6 +25,7 @@ export function AdminSidebar() {
   const [pendingSellers, setPendingSellers] = useState(0);
   const [pendingWithdrawals, setPendingWithdrawals] = useState(0);
   const [pendingSellerProducts, setPendingSellerProducts] = useState(0);
+  const [pendingReports, setPendingReports] = useState(0);
 
   useEffect(() => {
     loadNotifications();
@@ -54,6 +55,11 @@ export function AdminSidebar() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'seller_products' },
+        () => loadNotifications()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'seller_reports' },
         () => loadNotifications()
       )
       .subscribe();
@@ -106,6 +112,14 @@ export function AdminSidebar() {
       .eq('is_active', false);
 
     setPendingSellerProducts(sellerProductsCount || 0);
+
+    // Load pending reports count
+    const { count: reportsCount } = await supabase
+      .from('seller_reports')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending');
+
+    setPendingReports(reportsCount || 0);
   };
 
   const menuItems = [
@@ -116,6 +130,7 @@ export function AdminSidebar() {
     { title: "Cupons", url: "/admin/coupons", icon: Ticket },
     { title: "Avaliações", url: "/admin/reviews", icon: Star, badge: pendingReviews },
     { title: "Vendedores", url: "/admin/sellers", icon: Users, badge: pendingSellers + pendingWithdrawals },
+    { title: "Denúncias", url: "/admin/complaints", icon: Flag, badge: pendingReports },
     { title: "Chats", url: "/admin/chats", icon: MessageSquare, badge: unreadChats },
     { title: "Relatórios", url: "/admin/reports", icon: FileText },
   ];

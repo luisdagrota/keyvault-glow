@@ -7,11 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Loader2, Package, User as UserIcon, MessageSquare, CheckCircle2, Star, Camera, Save } from "lucide-react";
+import { Loader2, Package, User as UserIcon, MessageSquare, CheckCircle2, Star, Camera, Save, Flag } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ChatWindow } from "@/components/chat/ChatWindow";
+import { ReportSellerButton } from "@/components/ReportSellerButton";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,8 @@ interface Order {
   created_at: string;
   updated_at?: string;
   customer_name: string | null;
+  seller_id?: string | null;
+  seller_name?: string | null;
   chat_status?: {
     unread_customer_count: number;
     is_archived: boolean;
