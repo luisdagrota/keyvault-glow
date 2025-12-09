@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useNotificationSound } from "@/hooks/useNotificationSound";
 
 interface Notification {
   id: string;
@@ -24,6 +25,7 @@ export function AdminNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+  const { playSound } = useNotificationSound();
 
   useEffect(() => {
     // Load initial unread chat count
@@ -51,6 +53,7 @@ export function AdminNotifications() {
           };
           
           addNotification(notification);
+          playSound();
           
           toast.success("Novo pedido!", {
             description: notification.message,
@@ -81,6 +84,7 @@ export function AdminNotifications() {
             };
             
             addNotification(notification);
+            playSound();
             
             toast.success("Pagamento aprovado!", {
               description: notification.message,
@@ -125,6 +129,7 @@ export function AdminNotifications() {
             };
             
             addNotification(notification);
+            playSound();
             
             toast.info("Nova mensagem!", {
               description: notification.message,

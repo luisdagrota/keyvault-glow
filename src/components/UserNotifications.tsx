@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useNotificationSound } from "@/hooks/useNotificationSound";
 
 interface Notification {
   id: string;
@@ -26,6 +27,7 @@ export function UserNotifications() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const { playSound } = useNotificationSound();
 
   useEffect(() => {
     loadNotifications();
@@ -44,6 +46,7 @@ export function UserNotifications() {
           const newNotification = payload.new as Notification;
           setNotifications(prev => [newNotification, ...prev]);
           setUnreadCount(prev => prev + 1);
+          playSound();
         }
       )
       .subscribe();
