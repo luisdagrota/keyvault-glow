@@ -27,12 +27,45 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Fetch all data in parallel
-    const [productsResult, sellersResult, categoriesResult] = await Promise.all([
+    // Fetch Google Sheets products
+    const GOOGLE_SHEETS_URL = "https://docs.google.com/spreadsheets/d/1er-QqJee4-gheiE6jrQziFlbUrDkrb0uc2lO_8jnHSg/export?format=csv";
+    
+    let googleSheetsProducts: any[] = [];
+    try {
+      const csvResponse = await fetch(GOOGLE_SHEETS_URL);
+      if (csvResponse.ok) {
+        const csvText = await csvResponse.text();
+        const lines = csvText.split('\n').slice(1); // Skip header
+        googleSheetsProducts = lines
+          .filter(line => line.trim())
+          .map(line => {
+            const cols = line.split(',');
+            return {
+              id: cols[0] || '',
+              name: cols[1] || '',
+              description: cols[2] || '',
+              price: parseFloat(cols[3]?.replace(',', '.') || '0'),
+              category: cols[4] || '',
+              stock: parseInt(cols[5] || '0'),
+              image_url: cols[6] || '',
+              source: 'google_sheets'
+            };
+          });
+      }
+    } catch (e) {
+      console.log("Failed to fetch Google Sheets:", e);
+    }
+
+    // Fetch all data in parallel from Supabase
+    const [sellerProductsResult, adminProductsResult, sellersResult, categoriesResult] = await Promise.all([
       supabase
         .from("seller_products")
         .select("id, name, description, price, category, stock, image_url, slug, likes_count, seller_id")
         .eq("is_active", true)
+        .limit(100),
+      supabase
+        .from("products")
+        .select("id, name, description, price, category, stock, image_url")
         .limit(100),
       supabase
         .from("seller_profiles")
@@ -47,9 +80,17 @@ serve(async (req) => {
         .not("category", "is", null)
     ]);
 
-    const allProducts = productsResult.data || [];
+    // Combine all products from all sources
+    const sellerProducts = (sellerProductsResult.data || []).map(p => ({ ...p, source: 'seller' }));
+    const adminProducts = (adminProductsResult.data || []).map(p => ({ ...p, source: 'admin' }));
+    const allProducts = [...sellerProducts, ...adminProducts, ...googleSheetsProducts];
     const allSellers = sellersResult.data || [];
-    const allCategories = [...new Set((categoriesResult.data || []).map(c => c.category).filter(Boolean))];
+    
+    // Get categories from all sources
+    const sellerCategories = (categoriesResult.data || []).map(c => c.category).filter(Boolean);
+    const adminCategories = adminProducts.map(p => p.category).filter(Boolean);
+    const gsCategories = googleSheetsProducts.map(p => p.category).filter(Boolean);
+    const allCategories = [...new Set([...sellerCategories, ...adminCategories, ...gsCategories])];
 
     // Use AI for intelligent matching if available
     let correctedQuery = query;
