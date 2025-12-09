@@ -131,7 +131,10 @@ export const SellerProducts = ({ sellerId }: SellerProductsProps) => {
       if (error) {
         toast({ title: "Erro ao criar", description: error.message, variant: "destructive" });
       } else {
-        toast({ title: "Produto criado!" });
+        toast({ 
+          title: "Produto enviado para aprovação!", 
+          description: "Seu produto será analisado pelo administrador antes de ser publicado." 
+        });
         fetchProducts();
       }
     }
@@ -141,18 +144,7 @@ export const SellerProducts = ({ sellerId }: SellerProductsProps) => {
     resetForm();
   };
 
-  const toggleActive = async (product: Product) => {
-    const { error } = await supabase
-      .from("seller_products")
-      .update({ is_active: !product.is_active })
-      .eq("id", product.id);
-
-    if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
-    } else {
-      fetchProducts();
-    }
-  };
+  // Toggle active is now admin-only
 
   const deleteProduct = async (id: string) => {
     if (!confirm("Tem certeza que deseja excluir este produto?")) return;
@@ -315,11 +307,10 @@ export const SellerProducts = ({ sellerId }: SellerProductsProps) => {
                     <TableCell>{product.stock}</TableCell>
                     <TableCell>
                       <Badge
-                        variant={product.is_active ? "default" : "secondary"}
-                        className="cursor-pointer"
-                        onClick={() => toggleActive(product)}
+                        variant={product.is_active ? "default" : "outline"}
+                        className={product.is_active ? "" : "border-yellow-500 text-yellow-600"}
                       >
-                        {product.is_active ? "Ativo" : "Inativo"}
+                        {product.is_active ? "Aprovado" : "Pendente Aprovação"}
                       </Badge>
                     </TableCell>
                     <TableCell>
