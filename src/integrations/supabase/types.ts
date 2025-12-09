@@ -347,6 +347,51 @@ export type Database = {
           },
         ]
       }
+      seller_product_keys: {
+        Row: {
+          created_at: string
+          id: string
+          is_used: boolean
+          key_content: string
+          order_id: string | null
+          product_id: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_used?: boolean
+          key_content: string
+          order_id?: string | null
+          product_id: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_used?: boolean
+          key_content?: string
+          order_id?: string | null
+          product_id?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_product_keys_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_product_keys_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "seller_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seller_products: {
         Row: {
           category: string | null

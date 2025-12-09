@@ -134,30 +134,78 @@ serve(async (req) => {
           .eq('id', productId)
           .maybeSingle();
 
-        if (sellerProduct && sellerProduct.delivery_method === 'automatic' && sellerProduct.delivery_content) {
+        if (sellerProduct && sellerProduct.delivery_method === 'automatic') {
           console.log('🚀 Auto-delivery enabled for product:', sellerProduct.name);
           
-          // Send automatic delivery message in chat
-          const { error: chatError } = await supabase
-            .from('chat_messages')
-            .insert({
-              order_id: order.id,
-              sender_id: sellerProduct.seller_profiles.id,
-              sender_type: 'admin',
-              message: `🎉 **Entrega Automática**\n\nObrigado pela sua compra!\n\n📦 **Seu produto:**\n\n${sellerProduct.delivery_content}\n\n---\nEsta é uma entrega automática. Se tiver qualquer dúvida, responda aqui.`
-            });
+          // Try to get an available key from the inventory
+          const { data: availableKey, error: keyError } = await supabase
+            .from('seller_product_keys')
+            .select('*')
+            .eq('product_id', productId)
+            .eq('is_used', false)
+            .limit(1)
+            .maybeSingle();
 
-          if (chatError) {
-            console.error('❌ Error sending auto-delivery message:', chatError);
-          } else {
-            console.log('✅ Auto-delivery message sent successfully!');
+          let deliveryContent = '';
+
+          if (availableKey) {
+            // Use key from inventory
+            deliveryContent = availableKey.key_content;
+            
+            // Mark key as used
+            await supabase
+              .from('seller_product_keys')
+              .update({ 
+                is_used: true, 
+                used_at: new Date().toISOString(),
+                order_id: order.id 
+              })
+              .eq('id', availableKey.id);
+
+            console.log('🔑 Key consumed from inventory:', availableKey.id);
+
+            // Update stock count (count remaining keys)
+            const { count: remainingKeys } = await supabase
+              .from('seller_product_keys')
+              .select('*', { count: 'exact', head: true })
+              .eq('product_id', productId)
+              .eq('is_used', false);
+
+            await supabase
+              .from('seller_products')
+              .update({ stock: remainingKeys || 0 })
+              .eq('id', productId);
+
+          } else if (sellerProduct.delivery_content) {
+            // Fallback to static delivery_content if no keys in inventory
+            deliveryContent = sellerProduct.delivery_content;
+            
+            // Decrease stock
+            await supabase
+              .from('seller_products')
+              .update({ stock: Math.max(0, sellerProduct.stock - 1) })
+              .eq('id', productId);
           }
 
-          // Decrease stock
-          await supabase
-            .from('seller_products')
-            .update({ stock: Math.max(0, sellerProduct.stock - 1) })
-            .eq('id', productId);
+          if (deliveryContent) {
+            // Send automatic delivery message in chat
+            const { error: chatError } = await supabase
+              .from('chat_messages')
+              .insert({
+                order_id: order.id,
+                sender_id: sellerProduct.seller_profiles.id,
+                sender_type: 'admin',
+                message: `🎉 **Entrega Automática**\n\nObrigado pela sua compra!\n\n📦 **Seu produto:**\n\n${deliveryContent}\n\n---\nEsta é uma entrega automática. Se tiver qualquer dúvida, responda aqui.`
+              });
+
+            if (chatError) {
+              console.error('❌ Error sending auto-delivery message:', chatError);
+            } else {
+              console.log('✅ Auto-delivery message sent successfully!');
+            }
+          } else {
+            console.warn('⚠️ No keys available and no fallback content for product:', productId);
+          }
         }
       }
     } else if (paymentData.status === 'rejected') {
