@@ -11,16 +11,42 @@ interface SearchPreviewProps {
   onClose: () => void;
 }
 
+interface SearchProduct extends Product {
+  isSellerProduct?: boolean;
+}
+
 export function SearchPreview({ searchTerm, isOpen, onClose }: SearchPreviewProps) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<SearchProduct[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<SearchProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const data = await fetchProducts();
-        setProducts(data);
+        // Load Google Sheets products
+        const sheetsData = await fetchProducts();
+        
+        // Load seller products from Supabase
+        const { data: sellerProducts } = await supabase
+          .from("seller_products")
+          .select("*")
+          .eq("is_active", true);
+
+        // Convert seller products to Product format
+        const sellerProductsMapped: SearchProduct[] = (sellerProducts || []).map(sp => ({
+          id: sp.id,
+          name: sp.name,
+          description: sp.description || "",
+          price: sp.price,
+          category: sp.category || "Produtos de Vendedores",
+          stock: sp.stock,
+          imageUrl: sp.image_url || "",
+          isSellerProduct: true,
+          sellerId: sp.seller_id,
+        }));
+
+        // Combine both sources
+        setProducts([...sheetsData, ...sellerProductsMapped]);
       } catch (error) {
         console.error("Erro ao carregar produtos:", error);
       } finally {
@@ -44,6 +70,17 @@ export function SearchPreview({ searchTerm, isOpen, onClose }: SearchPreviewProp
           loadProducts();
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'seller_products'
+        },
+        () => {
+          loadProducts();
+        }
+      )
       .subscribe();
 
     return () => {
@@ -61,15 +98,22 @@ export function SearchPreview({ searchTerm, isOpen, onClose }: SearchPreviewProp
     const filtered = products
       .filter((product) => 
         product.name.toLowerCase().includes(term) ||
-        product.description.toLowerCase().includes(term) ||
-        product.category.toLowerCase().includes(term)
+        (product.description && product.description.toLowerCase().includes(term)) ||
+        (product.category && product.category.toLowerCase().includes(term))
       )
-      .slice(0, 5); // Limita a 5 resultados
+      .slice(0, 6); // Limita a 6 resultados
 
     setFilteredProducts(filtered);
   }, [searchTerm, products]);
 
   if (!isOpen || !searchTerm.trim()) return null;
+
+  const getProductLink = (product: SearchProduct) => {
+    if (product.isSellerProduct) {
+      return `/seller-product/${product.id}`;
+    }
+    return `/product/${product.id}`;
+  };
 
   return (
     <>
@@ -90,7 +134,7 @@ export function SearchPreview({ searchTerm, isOpen, onClose }: SearchPreviewProp
             {filteredProducts.map((product) => (
               <Link
                 key={product.id}
-                to={`/product/${product.id}`}
+                to={getProductLink(product)}
                 onClick={onClose}
                 className="flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors"
               >
@@ -101,7 +145,10 @@ export function SearchPreview({ searchTerm, isOpen, onClose }: SearchPreviewProp
                 />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{product.name}</p>
-                  <p className="text-xs text-muted-foreground">{product.category}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {product.category}
+                    {product.isSellerProduct && " • Vendedor"}
+                  </p>
                 </div>
                 <div className="text-sm font-bold text-primary">
                   R$ {product.price.toFixed(2)}
