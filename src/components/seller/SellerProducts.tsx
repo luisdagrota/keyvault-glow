@@ -20,9 +20,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Zap, Hand } from "lucide-react";
 
 interface Product {
   id: string;
@@ -34,6 +41,8 @@ interface Product {
   stock: number;
   is_active: boolean;
   likes_count: number;
+  delivery_method: string;
+  delivery_content: string | null;
 }
 
 interface SellerProductsProps {
@@ -53,6 +62,8 @@ export const SellerProducts = ({ sellerId }: SellerProductsProps) => {
   const [imageUrl, setImageUrl] = useState("");
   const [category, setCategory] = useState("");
   const [stock, setStock] = useState("");
+  const [deliveryMethod, setDeliveryMethod] = useState<string>('manual');
+  const [deliveryContent, setDeliveryContent] = useState("");
   
   const { toast } = useToast();
 
@@ -83,6 +94,8 @@ export const SellerProducts = ({ sellerId }: SellerProductsProps) => {
     setImageUrl("");
     setCategory("");
     setStock("");
+    setDeliveryMethod('manual');
+    setDeliveryContent("");
     setEditingProduct(null);
   };
 
@@ -94,12 +107,24 @@ export const SellerProducts = ({ sellerId }: SellerProductsProps) => {
     setImageUrl(product.image_url || "");
     setCategory(product.category || "");
     setStock(product.stock.toString());
+    setDeliveryMethod(product.delivery_method || 'manual');
+    setDeliveryContent(product.delivery_content || "");
     setDialogOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+
+    if (deliveryMethod === 'automatic' && !deliveryContent.trim()) {
+      toast({ 
+        title: "Conteúdo de entrega obrigatório", 
+        description: "Para entrega automática, informe o conteúdo que será enviado ao comprador.", 
+        variant: "destructive" 
+      });
+      setSaving(false);
+      return;
+    }
 
     const productData = {
       seller_id: sellerId,
@@ -109,6 +134,8 @@ export const SellerProducts = ({ sellerId }: SellerProductsProps) => {
       image_url: imageUrl || null,
       category: category || null,
       stock: parseInt(stock) || 0,
+      delivery_method: deliveryMethod,
+      delivery_content: deliveryMethod === 'automatic' ? deliveryContent : null,
     };
 
     if (editingProduct) {
@@ -253,6 +280,52 @@ export const SellerProducts = ({ sellerId }: SellerProductsProps) => {
                   placeholder="Ex: Games, Contas, etc"
                 />
               </div>
+              
+              {/* Delivery Method Section */}
+              <div className="space-y-2 p-4 border rounded-lg bg-muted/30">
+                <Label>Método de Entrega</Label>
+                <Select value={deliveryMethod} onValueChange={setDeliveryMethod}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o método" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="manual">
+                      <div className="flex items-center gap-2">
+                        <Hand className="h-4 w-4" />
+                        <span>Manual - Você envia pelo chat</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="automatic">
+                      <div className="flex items-center gap-2">
+                        <Zap className="h-4 w-4" />
+                        <span>Automático - Enviado automaticamente</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {deliveryMethod === 'automatic' 
+                    ? "O conteúdo será enviado automaticamente no chat quando o pagamento for aprovado."
+                    : "Você precisará enviar o produto manualmente pelo chat após o pagamento."}
+                </p>
+              </div>
+
+              {deliveryMethod === 'automatic' && (
+                <div className="space-y-2">
+                  <Label htmlFor="deliveryContent">Conteúdo da Entrega Automática</Label>
+                  <Textarea
+                    id="deliveryContent"
+                    value={deliveryContent}
+                    onChange={(e) => setDeliveryContent(e.target.value)}
+                    placeholder="Ex: Chave do jogo: XXXX-XXXX-XXXX-XXXX&#10;&#10;Ou credenciais de acesso, links, etc."
+                    className="min-h-[100px] font-mono text-sm"
+                    maxLength={2000}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Este conteúdo será enviado automaticamente ao comprador. {deliveryContent.length}/2000
+                  </p>
+                </div>
+              )}
               <Button type="submit" className="w-full" disabled={saving}>
                 {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {editingProduct ? "Salvar Alterações" : "Criar Produto"}
@@ -279,6 +352,7 @@ export const SellerProducts = ({ sellerId }: SellerProductsProps) => {
                   <TableHead>Produto</TableHead>
                   <TableHead>Preço</TableHead>
                   <TableHead>Estoque</TableHead>
+                  <TableHead>Entrega</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
@@ -305,6 +379,21 @@ export const SellerProducts = ({ sellerId }: SellerProductsProps) => {
                     </TableCell>
                     <TableCell>R$ {product.price.toFixed(2)}</TableCell>
                     <TableCell>{product.stock}</TableCell>
+                    <TableCell>
+                      <Badge variant={product.delivery_method === 'automatic' ? "default" : "secondary"}>
+                        {product.delivery_method === 'automatic' ? (
+                          <span className="flex items-center gap-1">
+                            <Zap className="h-3 w-3" />
+                            Auto
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1">
+                            <Hand className="h-3 w-3" />
+                            Manual
+                          </span>
+                        )}
+                      </Badge>
+                    </TableCell>
                     <TableCell>
                       <Badge
                         variant={product.is_active ? "default" : "outline"}
