@@ -13,6 +13,7 @@ import { ReviewForm } from "@/components/ReviewForm";
 import { SEOHead } from "@/components/SEOHead";
 import { LikeButton } from "@/components/LikeButton";
 import { RecommendedProducts } from "@/components/RecommendedProducts";
+import { ReportProductButton } from "@/components/ReportProductButton";
 import { Product } from "@/types/product";
 
 interface SellerProduct {
@@ -237,6 +238,15 @@ export default function SellerProductDetail() {
                   productId={product.id}
                   initialLikesCount={product.likes_count}
                 />
+                {product.seller_profiles && (
+                  <ReportProductButton
+                    productId={product.id}
+                    sellerId={product.seller_id}
+                    productName={product.name}
+                    sellerName={product.seller_profiles.full_name}
+                    variant="icon"
+                  />
+                )}
               </div>
 
               {!isOutOfStock && (
