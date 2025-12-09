@@ -512,10 +512,14 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           likes_count: number
+          meta_description: string | null
           name: string
           price: number
+          search_vector: unknown
           seller_id: string
+          slug: string | null
           stock: number
+          tags: string[] | null
           updated_at: string
         }
         Insert: {
@@ -528,10 +532,14 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           likes_count?: number
+          meta_description?: string | null
           name: string
           price: number
+          search_vector?: unknown
           seller_id: string
+          slug?: string | null
           stock?: number
+          tags?: string[] | null
           updated_at?: string
         }
         Update: {
@@ -544,10 +552,14 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           likes_count?: number
+          meta_description?: string | null
           name?: string
           price?: number
+          search_vector?: unknown
           seller_id?: string
+          slug?: string | null
           stock?: number
+          tags?: string[] | null
           updated_at?: string
         }
         Relationships: [
@@ -995,6 +1007,15 @@ export type Database = {
     }
     Functions: {
       assign_admin_by_email: { Args: { _email: string }; Returns: undefined }
+      generate_meta_description: {
+        Args: { description: string; name: string; price: number }
+        Returns: string
+      }
+      generate_product_tags: {
+        Args: { category: string; description: string; name: string }
+        Returns: string[]
+      }
+      generate_slug: { Args: { name: string }; Returns: string }
       has_role:
         | { Args: { _role: string; _user_id: string }; Returns: boolean }
         | {

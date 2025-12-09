@@ -16,6 +16,7 @@ interface SellerProduct {
   likes_count: number;
   seller_id: string;
   seller_name: string;
+  slug?: string | null;
 }
 
 interface SellerProductCardProps {
@@ -25,12 +26,15 @@ interface SellerProductCardProps {
 export function SellerProductCard({ product }: SellerProductCardProps) {
   const navigate = useNavigate();
   const isOutOfStock = product.stock === 0;
+  
+  // Use slug URL if available, fallback to ID
+  const productUrl = product.slug ? `/produto/${product.slug}` : `/seller-product/${product.id}`;
 
   return (
     <div className="card-gaming group">
       <div
         className="cursor-pointer"
-        onClick={() => navigate(`/seller-product/${product.id}`)}
+        onClick={() => navigate(productUrl)}
       >
         <div className="relative aspect-[4/3] overflow-hidden">
           {product.image_url ? (
@@ -69,7 +73,7 @@ export function SellerProductCard({ product }: SellerProductCardProps) {
       <div className="p-4 sm:p-5 space-y-3 sm:space-y-4">
         <div
           className="cursor-pointer"
-          onClick={() => navigate(`/seller-product/${product.id}`)}
+          onClick={() => navigate(productUrl)}
         >
           <h3 className="font-bold text-base sm:text-lg line-clamp-1 group-hover:text-primary transition-colors">
             {product.name}
@@ -107,7 +111,7 @@ export function SellerProductCard({ product }: SellerProductCardProps) {
               className="h-8 w-8 sm:h-9 sm:w-9 p-0"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate(`/seller-product/${product.id}`);
+                navigate(productUrl);
               }}
             >
               <Eye className="h-4 w-4" />
