@@ -170,35 +170,34 @@ const SellerProfile = () => {
       <Header />
       <main className="min-h-screen bg-background">
         {/* Banner Section */}
-        <div className="relative h-48 sm:h-64 md:h-80 overflow-hidden">
+        <div className="relative h-32 sm:h-48 md:h-56 overflow-hidden">
           {seller.banner_url ? (
             <img
               src={seller.banner_url}
               alt={`Banner de ${seller.full_name}`}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-center"
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-primary/30 via-primary/10 to-background relative overflow-hidden">
               {/* Animated gradient background */}
               <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-primary/20 animate-pulse" />
-              <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
             </div>
           )}
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
         </div>
 
-        <div className="container px-4 -mt-20 relative z-10">
+        <div className="container px-4 -mt-16 sm:-mt-20 relative z-10">
           <div className="max-w-4xl mx-auto space-y-6">
             {/* Profile Header Card */}
-            <Card className="overflow-hidden backdrop-blur-sm bg-card/95">
-              <CardContent className="pt-0">
-                <div className="flex flex-col items-center text-center md:flex-row md:items-end md:text-left gap-6 -mt-16 md:-mt-12">
+            <Card className="backdrop-blur-sm bg-card/95 border-border/50">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left gap-4 sm:gap-6">
                   {/* Avatar */}
-                  <div className="relative">
-                    <Avatar className="h-32 w-32 md:h-36 md:w-36 border-4 border-background shadow-2xl ring-4 ring-primary/20">
+                  <div className="relative flex-shrink-0 -mt-12 sm:-mt-16">
+                    <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-background shadow-2xl ring-2 ring-primary/20">
                       <AvatarImage src={seller.avatar_url || ""} alt={seller.full_name} />
-                      <AvatarFallback className="text-3xl font-bold bg-primary text-primary-foreground">
+                      <AvatarFallback className="text-2xl sm:text-3xl font-bold bg-primary text-primary-foreground">
                         {seller.full_name
                           .split(" ")
                           .map((n) => n[0])
@@ -209,55 +208,57 @@ const SellerProfile = () => {
                     </Avatar>
                     {/* Badges overlay on avatar */}
                     {badges.length > 0 && (
-                      <div className="absolute -bottom-2 -right-2">
+                      <div className="absolute -bottom-1 -right-1">
                         <SellerBadges badges={badges.slice(0, 1)} size="md" />
                       </div>
                     )}
                   </div>
 
                   {/* Info Section */}
-                  <div className="flex-1 pb-4 md:pb-6">
-                    <h1 className="text-2xl md:text-3xl font-bold mb-2">{seller.full_name}</h1>
+                  <div className="flex-1 min-w-0 pt-2 sm:pt-4">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 break-words">
+                      {seller.full_name}
+                    </h1>
                     
                     {/* Bio */}
                     {seller.bio && (
-                      <p className="text-muted-foreground mb-3 max-w-xl">
+                      <p className="text-sm sm:text-base text-muted-foreground mb-3 line-clamp-3 sm:line-clamp-none">
                         {seller.bio}
                       </p>
                     )}
 
-                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 text-sm text-muted-foreground">
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
+                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
                         Vendedor há {daysSinceJoined} dias
                       </span>
                       <span className="flex items-center gap-1">
-                        <Users className="h-4 w-4" />
+                        <Users className="h-3 w-3 sm:h-4 sm:w-4" />
                         {followerCount} seguidores
                       </span>
                     </div>
                   </div>
 
                   {/* Stats & Follow Button */}
-                  <div className="flex flex-col items-center gap-4 pb-4 md:pb-6">
-                    <div className="flex items-center gap-6">
+                  <div className="flex flex-col items-center gap-3 sm:gap-4 flex-shrink-0">
+                    <div className="flex items-center gap-4 sm:gap-6">
                       <div className="text-center">
-                        <div className="text-2xl md:text-3xl font-bold">{seller.total_sales}</div>
-                        <div className="text-xs text-muted-foreground">Vendas</div>
+                        <div className="text-xl sm:text-2xl md:text-3xl font-bold">{seller.total_sales}</div>
+                        <div className="text-[10px] sm:text-xs text-muted-foreground">Vendas</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl md:text-3xl font-bold flex items-center justify-center gap-1">
+                        <div className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center justify-center gap-1">
                           {seller.average_rating.toFixed(1)}
-                          <Star className="h-5 w-5 md:h-6 md:w-6 fill-yellow-400 text-yellow-400" />
+                          <Star className="h-4 w-4 sm:h-5 sm:w-5 fill-yellow-400 text-yellow-400" />
                         </div>
-                        <div className="text-xs text-muted-foreground">Avaliação</div>
+                        <div className="text-[10px] sm:text-xs text-muted-foreground">Avaliação</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl md:text-3xl font-bold flex items-center justify-center gap-1">
+                        <div className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center justify-center gap-1">
                           {totalLikes}
-                          <Heart className="h-5 w-5 md:h-6 md:w-6 text-red-500" />
+                          <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
                         </div>
-                        <div className="text-xs text-muted-foreground">Curtidas</div>
+                        <div className="text-[10px] sm:text-xs text-muted-foreground">Curtidas</div>
                       </div>
                     </div>
                     
