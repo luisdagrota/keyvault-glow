@@ -125,8 +125,41 @@ serve(async (req) => {
         console.log('👤 Order is linked to user:', order.user_id);
       }
       
-      // TODO: Implementar envio de e-mail com Resend ou outro serviço
-      // Exemplo: await sendDeliveryEmail(order.customer_email, order.product_name);
+      // Check if this is a seller product with automatic delivery
+      const productId = order.product_id;
+      if (productId) {
+        const { data: sellerProduct, error: productError } = await supabase
+          .from('seller_products')
+          .select('*, seller_profiles!inner(id)')
+          .eq('id', productId)
+          .maybeSingle();
+
+        if (sellerProduct && sellerProduct.delivery_method === 'automatic' && sellerProduct.delivery_content) {
+          console.log('🚀 Auto-delivery enabled for product:', sellerProduct.name);
+          
+          // Send automatic delivery message in chat
+          const { error: chatError } = await supabase
+            .from('chat_messages')
+            .insert({
+              order_id: order.id,
+              sender_id: sellerProduct.seller_profiles.id,
+              sender_type: 'admin',
+              message: `🎉 **Entrega Automática**\n\nObrigado pela sua compra!\n\n📦 **Seu produto:**\n\n${sellerProduct.delivery_content}\n\n---\nEsta é uma entrega automática. Se tiver qualquer dúvida, responda aqui.`
+            });
+
+          if (chatError) {
+            console.error('❌ Error sending auto-delivery message:', chatError);
+          } else {
+            console.log('✅ Auto-delivery message sent successfully!');
+          }
+
+          // Decrease stock
+          await supabase
+            .from('seller_products')
+            .update({ stock: Math.max(0, sellerProduct.stock - 1) })
+            .eq('id', productId);
+        }
+      }
     } else if (paymentData.status === 'rejected') {
       console.log('❌ Payment REJECTED! Order:', order.id);
     } else if (paymentData.status === 'pending' || paymentData.status === 'in_process') {
