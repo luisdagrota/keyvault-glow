@@ -364,6 +364,63 @@ export type Database = {
           },
         ]
       }
+      product_reports: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          id: string
+          product_id: string
+          reason: string
+          report_type: string
+          reporter_id: string
+          resolved_at: string | null
+          resolved_by: string | null
+          seller_id: string
+          status: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          id?: string
+          product_id: string
+          reason: string
+          report_type?: string
+          reporter_id: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          seller_id: string
+          status?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          id?: string
+          product_id?: string
+          reason?: string
+          report_type?: string
+          reporter_id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          seller_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reports_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "seller_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_reports_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_reviews: {
         Row: {
           comment: string | null
@@ -681,6 +738,7 @@ export type Database = {
           original_cpf: string | null
           pending_balance: number
           pix_key: string
+          reports_count: number | null
           total_sales: number
           updated_at: string
           user_id: string
@@ -704,6 +762,7 @@ export type Database = {
           original_cpf?: string | null
           pending_balance?: number
           pix_key: string
+          reports_count?: number | null
           total_sales?: number
           updated_at?: string
           user_id: string
@@ -727,6 +786,7 @@ export type Database = {
           original_cpf?: string | null
           pending_balance?: number
           pix_key?: string
+          reports_count?: number | null
           total_sales?: number
           updated_at?: string
           user_id?: string

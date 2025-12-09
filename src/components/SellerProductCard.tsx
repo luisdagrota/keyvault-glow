@@ -1,9 +1,10 @@
 import { Button } from "./ui/button";
-import { Package, Eye, User } from "lucide-react";
+import { Package, Eye, User, Flag } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "./ui/badge";
 import { LikeButton } from "./LikeButton";
 import { AddToCartButton } from "./AddToCartButton";
+import { ReportProductButton } from "./ReportProductButton";
 
 interface SellerProduct {
   id: string;
@@ -105,6 +106,15 @@ export function SellerProductCard({ product }: SellerProductCardProps) {
               initialLikesCount={product.likes_count}
               size="sm"
             />
+            <div onClick={(e) => e.stopPropagation()}>
+              <ReportProductButton
+                productId={product.id}
+                sellerId={product.seller_id}
+                productName={product.name}
+                sellerName={product.seller_name}
+                variant="icon"
+              />
+            </div>
             <Button
               size="sm"
               variant="ghost"
