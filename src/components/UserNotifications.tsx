@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bell } from "lucide-react";
+import { Bell, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNotificationSound } from "@/hooks/useNotificationSound";
+import { toast } from "sonner";
 
 interface Notification {
   id: string;
@@ -20,6 +21,7 @@ interface Notification {
   link: string | null;
   is_read: boolean;
   created_at: string;
+  user_id?: string;
 }
 
 export function UserNotifications() {
@@ -32,9 +34,9 @@ export function UserNotifications() {
   useEffect(() => {
     loadNotifications();
 
-    // Subscribe to new notifications
+    // Subscribe to new notifications in realtime
     const channel = supabase
-      .channel('user-notifications')
+      .channel('user-notifications-realtime')
       .on(
         'postgres_changes',
         {
@@ -42,11 +44,32 @@ export function UserNotifications() {
           schema: 'public',
           table: 'user_notifications'
         },
-        (payload) => {
+        async (payload) => {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
+          
           const newNotification = payload.new as Notification;
-          setNotifications(prev => [newNotification, ...prev]);
-          setUnreadCount(prev => prev + 1);
-          playSound();
+          if (newNotification.user_id === user.id) {
+            setNotifications(prev => [newNotification, ...prev]);
+            setUnreadCount(prev => prev + 1);
+            playSound();
+            toast.info(newNotification.title, {
+              description: newNotification.message,
+              duration: 4000
+            });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'user_notifications'
+        },
+        (payload) => {
+          const deletedId = (payload.old as any).id;
+          setNotifications(prev => prev.filter(n => n.id !== deletedId));
         }
       )
       .subscribe();
@@ -65,7 +88,7 @@ export function UserNotifications() {
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(20);
+      .limit(50);
 
     if (error) {
       console.error('Error loading notifications:', error);
@@ -102,6 +125,45 @@ export function UserNotifications() {
     setUnreadCount(0);
   };
 
+  const deleteNotification = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const { error } = await supabase
+      .from('user_notifications')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast.error("Erro ao remover notificação");
+      return;
+    }
+
+    const notification = notifications.find(n => n.id === id);
+    setNotifications(prev => prev.filter(n => n.id !== id));
+    if (notification && !notification.is_read) {
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('user_notifications')
+      .delete()
+      .eq('user_id', user.id);
+
+    if (error) {
+      toast.error("Erro ao limpar notificações");
+      return;
+    }
+
+    setNotifications([]);
+    setUnreadCount(0);
+    toast.success("Notificações removidas");
+  };
+
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.is_read) {
       markAsRead(notification.id);
@@ -120,6 +182,10 @@ export function UserNotifications() {
         return '✅';
       case 'chat_message':
         return '💬';
+      case 'sale':
+        return '💰';
+      case 'balance_released':
+        return '💵';
       default:
         return '🔔';
     }
@@ -159,11 +225,18 @@ export function UserNotifications() {
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between">
             <h4 className="font-semibold">Notificações</h4>
-            {unreadCount > 0 && (
-              <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-xs h-7">
-                Marcar todas como lidas
-              </Button>
-            )}
+            <div className="flex gap-1">
+              {unreadCount > 0 && (
+                <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-xs h-7">
+                  Marcar lidas
+                </Button>
+              )}
+              {notifications.length > 0 && (
+                <Button variant="ghost" size="sm" onClick={clearAllNotifications} className="text-xs h-7 text-destructive hover:text-destructive">
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
         
@@ -176,18 +249,18 @@ export function UserNotifications() {
           ) : (
             <div className="divide-y divide-border">
               {notifications.map((notification) => (
-                <button
+                <div
                   key={notification.id}
-                  onClick={() => handleNotificationClick(notification)}
-                  className={`w-full text-left p-4 hover:bg-muted/50 transition-colors ${
+                  className={`relative group w-full text-left p-4 hover:bg-muted/50 transition-colors cursor-pointer ${
                     !notification.is_read ? 'bg-accent/10' : ''
                   }`}
+                  onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex gap-3">
                     <span className="text-lg flex-shrink-0">
                       {getNotificationIcon(notification.type)}
                     </span>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 pr-6">
                       <p className={`text-sm font-medium ${!notification.is_read ? 'text-foreground' : 'text-muted-foreground'}`}>
                         {notification.title}
                       </p>
@@ -199,10 +272,18 @@ export function UserNotifications() {
                       </p>
                     </div>
                     {!notification.is_read && (
-                      <span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1.5" />
+                      <span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1.5 absolute right-12" />
                     )}
                   </div>
-                </button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => deleteNotification(notification.id, e)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
               ))}
             </div>
           )}
