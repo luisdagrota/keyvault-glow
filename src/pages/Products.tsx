@@ -637,22 +637,22 @@ export default function Products() {
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="card-gaming h-80 animate-pulse" />
+                <div key={i} className="card-gaming h-64 sm:h-80 animate-pulse" />
               ))}
             </div>
           ) : products.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-muted-foreground text-lg mb-4">Nenhum produto encontrado</p>
+            <div className="text-center py-12 sm:py-16">
+              <p className="text-muted-foreground text-base sm:text-lg mb-4">Nenhum produto encontrado</p>
               <Button variant="outline" onClick={clearAllFilters}>
                 Limpar Filtros
               </Button>
             </div>
           ) : (
             <>
-              <p className="text-sm text-muted-foreground mb-4">{products.length} produto(s) encontrado(s)</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+              <p className="text-xs sm:text-sm text-muted-foreground mb-4">{products.length} produto(s) encontrado(s)</p>
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                 {products.map((product) =>
                   product.source === "store" ? (
                     <ProductCard

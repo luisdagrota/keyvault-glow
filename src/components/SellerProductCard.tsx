@@ -71,15 +71,15 @@ export function SellerProductCard({ product }: SellerProductCardProps) {
         </div>
       </div>
 
-      <div className="p-4 sm:p-5 space-y-3 sm:space-y-4">
+      <div className="p-3 sm:p-5 space-y-2 sm:space-y-4">
         <div
           className="cursor-pointer"
           onClick={() => navigate(productUrl)}
         >
-          <h3 className="font-bold text-base sm:text-lg line-clamp-1 group-hover:text-primary transition-colors">
+          <h3 className="font-bold text-sm sm:text-lg line-clamp-1 group-hover:text-primary transition-colors">
             {product.name}
           </h3>
-          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mt-1 sm:mt-2 min-h-[32px] sm:min-h-[40px]">
+          <p className="text-xs text-muted-foreground line-clamp-2 mt-1 sm:mt-2 min-h-[28px] sm:min-h-[40px] hidden sm:block">
             {product.description || "Sem descrição"}
           </p>
         </div>
@@ -95,18 +95,18 @@ export function SellerProductCard({ product }: SellerProductCardProps) {
 
         <div className="flex items-center justify-between pt-2 border-t border-border/50">
           <div>
-            <span className="text-xl sm:text-2xl font-bold text-primary">
+            <span className="text-base sm:text-2xl font-bold text-primary">
               R$ {product.price.toFixed(2)}
             </span>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 sm:gap-1">
             <LikeButton
               productId={product.id}
               initialLikesCount={product.likes_count}
               size="sm"
             />
-            <div onClick={(e) => e.stopPropagation()}>
+            <div className="hidden sm:block" onClick={(e) => e.stopPropagation()}>
               <ReportProductButton
                 productId={product.id}
                 sellerId={product.seller_id}
@@ -145,7 +145,7 @@ export function SellerProductCard({ product }: SellerProductCardProps) {
         </div>
 
         {!isOutOfStock && (
-          <div className="flex items-center gap-2 text-xs text-success">
+          <div className="hidden sm:flex items-center gap-2 text-xs text-success">
             <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
             <span>Em estoque</span>
           </div>

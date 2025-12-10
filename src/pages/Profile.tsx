@@ -246,29 +246,29 @@ const Profile = () => {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-background py-12 px-4">
-        <div className="max-w-4xl mx-auto space-y-8">
+      <main className="min-h-screen bg-background py-6 sm:py-12 px-4">
+        <div className="max-w-4xl mx-auto space-y-4 sm:space-y-8">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3 sm:gap-4">
                   <div className="relative group">
-                    <Avatar className="h-20 w-20 border-2 border-border">
+                    <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-2 border-border">
                       <AvatarImage src={profile?.avatar_url || ""} alt={profile?.full_name} />
-                      <AvatarFallback className="text-xl bg-primary/10 text-primary">
-                        {profile?.full_name?.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || <UserIcon className="h-8 w-8" />}
+                      <AvatarFallback className="text-lg sm:text-xl bg-primary/10 text-primary">
+                        {profile?.full_name?.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || <UserIcon className="h-6 w-6 sm:h-8 sm:w-8" />}
                       </AvatarFallback>
                     </Avatar>
                     <button
                       onClick={() => setEditingAvatar(true)}
                       className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      <Camera className="h-6 w-6 text-white" />
+                      <Camera className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                     </button>
                   </div>
-                  <div className="space-y-1">
-                    <CardTitle className="text-2xl">{profile?.full_name}</CardTitle>
-                    <CardDescription>{user?.email}</CardDescription>
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <CardTitle className="text-lg sm:text-2xl truncate">{profile?.full_name}</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm truncate">{user?.email}</CardDescription>
                     {profile && (
                       <BuyerReputation
                         rating={profile.buyer_rating ?? 5}
@@ -280,34 +280,36 @@ const Profile = () => {
                     )}
                   </div>
                 </div>
-                <Button variant="outline" onClick={handleLogout}>
+                <Button variant="outline" onClick={handleLogout} className="w-full sm:w-auto">
                   Sair
                 </Button>
               </div>
 
               {editingAvatar && (
-                <div className="mt-4 p-4 rounded-lg bg-muted/50 border space-y-3">
+                <div className="mt-4 p-3 sm:p-4 rounded-lg bg-muted/50 border space-y-3">
                   <p className="text-sm font-medium">Foto de Perfil</p>
                   <p className="text-xs text-muted-foreground">
                     Cole o link de uma imagem (URL) para usar como foto de perfil
                   </p>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Input
                       placeholder="https://exemplo.com/minha-foto.jpg"
                       value={avatarUrl}
                       onChange={(e) => setAvatarUrl(e.target.value)}
                       className="flex-1"
                     />
-                    <Button onClick={handleSaveAvatar} disabled={savingAvatar} size="sm">
-                      {savingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                      Salvar
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => {
-                      setEditingAvatar(false);
-                      setAvatarUrl(profile?.avatar_url || "");
-                    }}>
-                      Cancelar
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button onClick={handleSaveAvatar} disabled={savingAvatar} size="sm" className="flex-1 sm:flex-none">
+                        {savingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+                        Salvar
+                      </Button>
+                      <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={() => {
+                        setEditingAvatar(false);
+                        setAvatarUrl(profile?.avatar_url || "");
+                      }}>
+                        Cancelar
+                      </Button>
+                    </div>
                   </div>
                   {avatarUrl && (
                     <div className="flex items-center gap-3 pt-2">
