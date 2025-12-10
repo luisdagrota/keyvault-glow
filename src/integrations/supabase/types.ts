@@ -534,6 +534,166 @@ export type Database = {
         }
         Relationships: []
       }
+      refund_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          refund_id: string | null
+          user_id: string
+          user_type: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          refund_id?: string | null
+          user_id: string
+          user_type: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          refund_id?: string | null
+          user_id?: string
+          user_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refund_logs_refund_id_fkey"
+            columns: ["refund_id"]
+            isOneToOne: false
+            referencedRelation: "refund_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      refund_messages: {
+        Row: {
+          attachment_name: string | null
+          attachment_url: string | null
+          created_at: string
+          id: string
+          message: string | null
+          refund_id: string
+          sender_id: string
+          sender_type: string
+        }
+        Insert: {
+          attachment_name?: string | null
+          attachment_url?: string | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          refund_id: string
+          sender_id: string
+          sender_type: string
+        }
+        Update: {
+          attachment_name?: string | null
+          attachment_url?: string | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          refund_id?: string
+          sender_id?: string
+          sender_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refund_messages_refund_id_fkey"
+            columns: ["refund_id"]
+            isOneToOne: false
+            referencedRelation: "refund_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      refund_requests: {
+        Row: {
+          admin_decision: string | null
+          admin_notes: string | null
+          created_at: string
+          customer_id: string
+          customer_pix_key: string
+          description: string | null
+          id: string
+          order_amount: number
+          order_id: string
+          pix_key_type: string
+          proofs: string[] | null
+          reason: string
+          resolved_at: string | null
+          resolved_by: string | null
+          seller_deducted_amount: number | null
+          seller_id: string | null
+          seller_responded_at: string | null
+          seller_response: string | null
+          status: string
+        }
+        Insert: {
+          admin_decision?: string | null
+          admin_notes?: string | null
+          created_at?: string
+          customer_id: string
+          customer_pix_key: string
+          description?: string | null
+          id?: string
+          order_amount: number
+          order_id: string
+          pix_key_type: string
+          proofs?: string[] | null
+          reason: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          seller_deducted_amount?: number | null
+          seller_id?: string | null
+          seller_responded_at?: string | null
+          seller_response?: string | null
+          status?: string
+        }
+        Update: {
+          admin_decision?: string | null
+          admin_notes?: string | null
+          created_at?: string
+          customer_id?: string
+          customer_pix_key?: string
+          description?: string | null
+          id?: string
+          order_amount?: number
+          order_id?: string
+          pix_key_type?: string
+          proofs?: string[] | null
+          reason?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          seller_deducted_amount?: number | null
+          seller_id?: string | null
+          seller_responded_at?: string | null
+          seller_response?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refund_requests_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refund_requests_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seller_followers: {
         Row: {
           created_at: string
@@ -735,6 +895,8 @@ export type Database = {
           is_approved: boolean
           is_suspended: boolean
           last_profile_change: string | null
+          last_refund_reset: string | null
+          monthly_refunds_count: number | null
           original_cpf: string | null
           pending_balance: number
           pix_key: string
@@ -759,6 +921,8 @@ export type Database = {
           is_approved?: boolean
           is_suspended?: boolean
           last_profile_change?: string | null
+          last_refund_reset?: string | null
+          monthly_refunds_count?: number | null
           original_cpf?: string | null
           pending_balance?: number
           pix_key: string
@@ -783,6 +947,8 @@ export type Database = {
           is_approved?: boolean
           is_suspended?: boolean
           last_profile_change?: string | null
+          last_refund_reset?: string | null
+          monthly_refunds_count?: number | null
           original_cpf?: string | null
           pending_balance?: number
           pix_key?: string
@@ -1157,6 +1323,7 @@ export type Database = {
     }
     Functions: {
       assign_admin_by_email: { Args: { _email: string }; Returns: undefined }
+      can_request_refund: { Args: { order_id: string }; Returns: boolean }
       generate_meta_description: {
         Args: { description: string; name: string; price: number }
         Returns: string
@@ -1176,6 +1343,7 @@ export type Database = {
           }
         | { Args: { _role: string; _user_id: string }; Returns: boolean }
       release_seller_balance: { Args: never; Returns: undefined }
+      reset_monthly_refunds: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"

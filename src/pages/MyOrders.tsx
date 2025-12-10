@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Package, MessageSquare, Loader2 } from "lucide-react";
+import { RefundRequestButton } from "@/components/RefundRequestButton";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import {
   Dialog,
@@ -114,7 +115,8 @@ export default function MyOrders() {
       pending: { label: "Pendente", variant: "secondary" },
       cancelled: { label: "Cancelado", variant: "destructive" },
       delivered: { label: "Entregue", variant: "default" },
-      refunded: { label: "Reembolsado", variant: "outline" }
+      refunded: { label: "Reembolsado", variant: "outline" },
+      refund_requested: { label: "Reembolso em análise", variant: "secondary" }
     };
 
     const config = statusConfig[status] || { label: status, variant: "outline" };
@@ -207,28 +209,44 @@ export default function MyOrders() {
                         </p>
                       </div>
 
-                      {!isDelivered && (
-                        <Button
-                          onClick={() => setSelectedOrder(order)}
-                          variant={unreadCount > 0 ? "default" : "outline"}
-                          className="gap-2"
-                        >
-                          <MessageSquare className="h-4 w-4" />
-                          Chat com Suporte
-                          {unreadCount > 0 && (
-                            <Badge variant="destructive" className="ml-1">
-                              {unreadCount}
-                            </Badge>
-                          )}
-                        </Button>
-                      )}
+                      <div className="flex flex-wrap items-center gap-2">
+                        {(order.payment_status === 'approved' || order.payment_status === 'delivered') && (
+                          <RefundRequestButton
+                            orderId={order.id}
+                            orderAmount={order.transaction_amount}
+                            sellerId={(order as any).seller_id}
+                            paymentStatus={order.payment_status}
+                            deliveredAt={order.payment_status === 'delivered' ? (order as any).updated_at : undefined}
+                          />
+                        )}
 
-                      {isDelivered && (
-                        <div className="flex items-center gap-2 text-success">
-                          <Package className="h-5 w-5" />
-                          <span className="font-medium">✅ Pedido Entregue</span>
-                        </div>
-                      )}
+                        {!isDelivered && order.payment_status !== 'refunded' && (
+                          <Button
+                            onClick={() => setSelectedOrder(order)}
+                            variant={unreadCount > 0 ? "default" : "outline"}
+                            className="gap-2"
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                            Chat com Suporte
+                            {unreadCount > 0 && (
+                              <Badge variant="destructive" className="ml-1">
+                                {unreadCount}
+                              </Badge>
+                            )}
+                          </Button>
+                        )}
+
+                        {isDelivered && (
+                          <div className="flex items-center gap-2 text-success">
+                            <Package className="h-5 w-5" />
+                            <span className="font-medium">✅ Pedido Entregue</span>
+                          </div>
+                        )}
+
+                        {order.payment_status === 'refunded' && (
+                          <Badge variant="outline" className="text-amber-600">Reembolsado</Badge>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
