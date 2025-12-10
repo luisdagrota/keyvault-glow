@@ -124,6 +124,52 @@ serve(async (req) => {
       if (order.user_id) {
         console.log('👤 Order is linked to user:', order.user_id);
       }
+
+      // Deduct seller coupon discount from seller's pending balance
+      if (order.coupon_code && order.discount_amount && order.discount_amount > 0 && order.seller_id) {
+        console.log('🏷️ Checking seller coupon:', order.coupon_code);
+        
+        const { data: sellerCoupon, error: couponError } = await supabase
+          .from('seller_coupons')
+          .select('id, seller_id')
+          .eq('code', order.coupon_code.toUpperCase())
+          .eq('seller_id', order.seller_id)
+          .maybeSingle();
+
+        if (sellerCoupon && !couponError) {
+          console.log('💰 Deducting seller coupon discount from seller balance:', order.discount_amount);
+          
+          // Deduct from seller's pending balance
+          const { error: balanceError } = await supabase.rpc('deduct_seller_coupon_balance', {
+            p_seller_id: order.seller_id,
+            p_amount: order.discount_amount
+          });
+
+          if (balanceError) {
+            console.error('❌ Error deducting coupon from seller balance:', balanceError);
+            
+            // Fallback: direct update if RPC doesn't exist
+            const { data: sellerProfile } = await supabase
+              .from('seller_profiles')
+              .select('pending_balance')
+              .eq('id', order.seller_id)
+              .single();
+
+            if (sellerProfile) {
+              const newBalance = Math.max(0, (sellerProfile.pending_balance || 0) - order.discount_amount);
+              await supabase
+                .from('seller_profiles')
+                .update({ pending_balance: newBalance })
+                .eq('id', order.seller_id);
+              console.log('✅ Seller balance updated via fallback:', newBalance);
+            }
+          } else {
+            console.log('✅ Seller coupon discount deducted successfully');
+          }
+        } else {
+          console.log('ℹ️ Coupon is not a seller coupon or not found for this seller');
+        }
+      }
       
       // Check if this is a seller product with automatic delivery
       const productId = order.product_id;
