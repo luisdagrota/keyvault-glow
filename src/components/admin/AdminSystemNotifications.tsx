@@ -21,10 +21,31 @@ interface SystemNotification {
   metadata?: any;
 }
 
+const DISMISSED_KEY = 'admin_dismissed_notifications';
+const CLEAR_TIMESTAMP_KEY = 'admin_notifications_cleared_at';
+
 export function AdminSystemNotifications() {
   const [notifications, setNotifications] = useState<SystemNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const { playSound } = useNotificationSound();
+
+  const getDismissedIds = (): Set<string> => {
+    try {
+      const stored = localStorage.getItem(DISMISSED_KEY);
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  };
+
+  const getClearedTimestamp = (): Date | null => {
+    try {
+      const stored = localStorage.getItem(CLEAR_TIMESTAMP_KEY);
+      return stored ? new Date(stored) : null;
+    } catch {
+      return null;
+    }
+  };
 
   useEffect(() => {
     loadInitialNotifications();
@@ -33,6 +54,9 @@ export function AdminSystemNotifications() {
 
   const loadInitialNotifications = async () => {
     try {
+      const dismissedIds = getDismissedIds();
+      const clearedAt = getClearedTimestamp();
+
       // Load recent orders
       const { data: recentOrders } = await supabase
         .from('orders')
@@ -60,8 +84,15 @@ export function AdminSystemNotifications() {
       // Add order notifications
       recentOrders?.forEach(order => {
         if (order.payment_status === 'approved') {
+          const id = `order-${order.id}`;
+          const timestamp = new Date(order.created_at);
+          
+          // Skip if dismissed or created before clear timestamp
+          if (dismissedIds.has(id)) return;
+          if (clearedAt && timestamp < clearedAt) return;
+          
           systemNotifications.push({
-            id: `order-${order.id}`,
+            id,
             type: 'order',
             title: 'Novo Pedido Aprovado',
             message: `${order.product_name} - R$ ${Number(order.transaction_amount).toFixed(2)}`,
@@ -74,8 +105,14 @@ export function AdminSystemNotifications() {
 
       // Add report notifications
       pendingReports?.forEach(report => {
+        const id = `report-${report.id}`;
+        const timestamp = new Date(report.created_at);
+        
+        if (dismissedIds.has(id)) return;
+        if (clearedAt && timestamp < clearedAt) return;
+        
         systemNotifications.push({
-          id: `report-${report.id}`,
+          id,
           type: 'report',
           title: 'Nova Denúncia',
           message: `Denúncia contra ${(report as any).seller_profiles?.full_name || 'vendedor'}`,
@@ -87,9 +124,15 @@ export function AdminSystemNotifications() {
 
       // Add chat notifications
       unreadChats?.forEach(chat => {
+        const id = `chat-${chat.order_id}`;
+        const timestamp = new Date(chat.last_message_at || chat.created_at);
+        
+        if (dismissedIds.has(id)) return;
+        if (clearedAt && timestamp < clearedAt) return;
+        
         const order = (chat as any).orders;
         systemNotifications.push({
-          id: `chat-${chat.order_id}`,
+          id,
           type: 'chat',
           title: 'Mensagens Não Lidas',
           message: `${chat.unread_admin_count} mensagem(ns) de ${order?.customer_name || order?.customer_email || 'cliente'}`,
@@ -234,10 +277,23 @@ export function AdminSystemNotifications() {
   };
 
   const deleteNotification = (id: string) => {
+    // Save to localStorage so it doesn't come back
+    const dismissed = getDismissedIds();
+    dismissed.add(id);
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify([...dismissed]));
+    
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
   const clearAllNotifications = () => {
+    // Save timestamp so notifications before this time won't appear
+    localStorage.setItem(CLEAR_TIMESTAMP_KEY, new Date().toISOString());
+    
+    // Also add all current notification IDs to dismissed list
+    const dismissed = getDismissedIds();
+    notifications.forEach(n => dismissed.add(n.id));
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify([...dismissed]));
+    
     setNotifications([]);
     toast.success("Notificações limpas");
   };
