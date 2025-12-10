@@ -1,5 +1,5 @@
 import { Button } from "./ui/button";
-import { Package, Eye, User, Flag } from "lucide-react";
+import { Package, Eye, User } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "./ui/badge";
 import { LikeButton } from "./LikeButton";
@@ -28,76 +28,72 @@ export function SellerProductCard({ product }: SellerProductCardProps) {
   const navigate = useNavigate();
   const isOutOfStock = product.stock === 0;
   
-  // Use slug URL if available, fallback to ID
   const productUrl = product.slug ? `/produto/${product.slug}` : `/seller-product/${product.id}`;
 
   return (
-    <div className="card-gaming group">
+    <div className="group bg-card rounded-lg overflow-hidden border border-border/50 shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1">
       <div
         className="cursor-pointer"
         onClick={() => navigate(productUrl)}
       >
-        <div className="relative aspect-square overflow-hidden">
+        <div className="relative aspect-[16/10] overflow-hidden bg-muted">
           {product.image_url ? (
             <img
               src={product.image_url}
               alt={product.name}
-              className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
+              className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <div className="w-full h-full bg-muted flex items-center justify-center">
-              <Package className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground/30" />
+            <div className="w-full h-full flex items-center justify-center">
+              <Package className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground/30" />
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
           {isOutOfStock && (
             <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-              <Badge variant="destructive" className="text-sm sm:text-lg px-3 py-1.5 sm:px-4 sm:py-2">
+              <Badge variant="destructive" className="text-xs sm:text-sm px-2 py-1 sm:px-3 sm:py-1.5">
                 ESGOTADO
               </Badge>
             </div>
           )}
 
           {product.stock > 0 && product.stock < 5 && (
-            <Badge className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-warning text-warning-foreground font-semibold text-xs sm:text-sm">
+            <Badge className="absolute top-2 right-2 bg-warning text-warning-foreground font-medium text-[10px] sm:text-xs px-1.5 py-0.5">
               Últimas {product.stock}!
             </Badge>
           )}
 
-          <Badge variant="outline" className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-background/80 text-xs">
+          <Badge variant="outline" className="absolute top-2 left-2 bg-background/80 text-[10px] sm:text-xs px-1.5 py-0.5">
             Vendedor
           </Badge>
         </div>
       </div>
 
-      <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
+      <div className="p-3 sm:p-4">
         <div
           className="cursor-pointer"
           onClick={() => navigate(productUrl)}
         >
-          <h3 className="font-bold text-sm sm:text-base line-clamp-1 group-hover:text-primary transition-colors">
+          <h3 className="font-semibold text-sm sm:text-base line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem] group-hover:text-primary transition-colors leading-tight">
             {product.name}
           </h3>
         </div>
 
         <Link
           to={`/seller/${product.seller_id}`}
-          className="flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors"
+          className="mt-1 flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground hover:text-primary transition-colors"
           onClick={(e) => e.stopPropagation()}
         >
           <User className="h-3 w-3" />
           <span className="truncate">por {product.seller_name}</span>
         </Link>
 
-        <div className="flex items-center justify-between pt-2 border-t border-border/50">
-          <div>
-            <span className="text-base sm:text-2xl font-bold text-primary">
-              R$ {product.price.toFixed(2)}
-            </span>
-          </div>
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-lg sm:text-xl font-bold text-primary">
+            R$ {product.price.toFixed(2)}
+          </span>
 
-          <div className="flex items-center gap-0.5 sm:gap-1">
+          <div className="flex items-center gap-0.5">
             <LikeButton
               productId={product.id}
               initialLikesCount={product.likes_count}
@@ -115,7 +111,7 @@ export function SellerProductCard({ product }: SellerProductCardProps) {
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 sm:h-9 sm:w-9 p-0"
+              className="h-8 w-8 p-0 hover:bg-primary/10"
               onClick={(e) => {
                 e.stopPropagation();
                 navigate(productUrl);
@@ -142,8 +138,8 @@ export function SellerProductCard({ product }: SellerProductCardProps) {
         </div>
 
         {!isOutOfStock && (
-          <div className="hidden sm:flex items-center gap-2 text-xs text-success">
-            <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
+          <div className="mt-2 flex items-center gap-1.5 text-[10px] sm:text-xs text-success">
+            <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
             <span>Em estoque</span>
           </div>
         )}

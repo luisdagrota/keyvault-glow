@@ -1,6 +1,6 @@
 import { Product } from "@/types/product";
 import { Button } from "./ui/button";
-import { Package, ShoppingCart, Eye } from "lucide-react";
+import { Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "./ui/badge";
 import { AddToCartButton } from "./AddToCartButton";
@@ -13,53 +13,50 @@ export function ProductCard({ product }: ProductCardProps) {
   const isOutOfStock = product.stock === 0;
 
   return (
-    <div className="card-gaming group">
+    <div className="group bg-card rounded-lg overflow-hidden border border-border/50 shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1">
       <Link to={`/product/${product.id}`}>
-        <div className="relative aspect-square overflow-hidden">
+        <div className="relative aspect-[16/10] overflow-hidden bg-muted">
           <img
             src={product.imageUrl}
             alt={product.name}
-            className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
+            className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           
           {isOutOfStock && (
             <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-              <Badge variant="destructive" className="text-sm sm:text-lg px-3 py-1.5 sm:px-4 sm:py-2">
+              <Badge variant="destructive" className="text-xs sm:text-sm px-2 py-1 sm:px-3 sm:py-1.5">
                 ESGOTADO
               </Badge>
             </div>
           )}
           
           {product.stock > 0 && product.stock < 5 && (
-            <Badge className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-warning text-warning-foreground font-semibold text-xs sm:text-sm">
+            <Badge className="absolute top-2 right-2 bg-warning text-warning-foreground font-medium text-[10px] sm:text-xs px-1.5 py-0.5">
               Últimas {product.stock}!
             </Badge>
           )}
           
-          <Badge variant="secondary" className="absolute top-2 left-2 sm:top-3 sm:left-3 text-xs">
+          <Badge variant="secondary" className="absolute top-2 left-2 text-[10px] sm:text-xs px-1.5 py-0.5">
             {product.category}
           </Badge>
         </div>
       </Link>
 
-      <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
+      <div className="p-3 sm:p-4">
         <Link to={`/product/${product.id}`}>
-          <h3 className="font-bold text-sm sm:text-base line-clamp-1 group-hover:text-primary transition-colors">
+          <h3 className="font-semibold text-sm sm:text-base line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem] group-hover:text-primary transition-colors leading-tight">
             {product.name}
           </h3>
         </Link>
 
-        <div className="flex items-center justify-between pt-2 border-t border-border/50">
-          <div>
-            <span className="text-base sm:text-2xl font-bold text-primary">
-              R$ {product.price.toFixed(2)}
-            </span>
-          </div>
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-lg sm:text-xl font-bold text-primary">
+            R$ {product.price.toFixed(2)}
+          </span>
           
           <div className="flex items-center gap-1">
             <Link to={`/product/${product.id}`}>
-              <Button size="sm" variant="ghost" className="h-8 w-8 sm:h-9 sm:w-9 p-0">
+              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-primary/10">
                 <Eye className="h-4 w-4" />
               </Button>
             </Link>
@@ -80,9 +77,9 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
 
         {!isOutOfStock && (
-          <div className="hidden sm:flex items-center gap-2 text-xs text-success">
-            <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
-            <span>Em estoque • Entrega imediata</span>
+          <div className="mt-2 flex items-center gap-1.5 text-[10px] sm:text-xs text-success">
+            <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+            <span>Em estoque</span>
           </div>
         )}
       </div>
