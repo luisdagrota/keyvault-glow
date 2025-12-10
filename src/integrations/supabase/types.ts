@@ -1167,7 +1167,6 @@ export type Database = {
       }
       generate_slug: { Args: { name: string }; Returns: string }
       has_role:
-        | { Args: { _role: string; _user_id: string }; Returns: boolean }
         | {
             Args: {
               _role: Database["public"]["Enums"]["app_role"]
@@ -1175,6 +1174,7 @@ export type Database = {
             }
             Returns: boolean
           }
+        | { Args: { _role: string; _user_id: string }; Returns: boolean }
       release_seller_balance: { Args: never; Returns: undefined }
     }
     Enums: {
