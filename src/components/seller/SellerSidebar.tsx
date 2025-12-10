@@ -13,7 +13,8 @@ import {
   Menu,
   Bell,
   AlertTriangle,
-  RefreshCcw
+  RefreshCcw,
+  Tag
 } from "lucide-react";
 import {
   Sheet,
@@ -62,6 +63,7 @@ export const SellerSidebar = ({ activeTab, setActiveTab, sellerId }: SellerSideb
   const menuItems = [
     { id: "overview", label: "Dashboard", icon: LayoutDashboard },
     { id: "products", label: "Meus Produtos", icon: Package },
+    { id: "coupons", label: "Cupons", icon: Tag },
     { id: "sales", label: "Minhas Vendas", icon: ShoppingCart },
     { id: "balance", label: "Saldo", icon: Wallet },
     { id: "refunds", label: "Reembolsos", icon: RefreshCcw },

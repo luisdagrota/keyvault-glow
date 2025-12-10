@@ -1,10 +1,11 @@
 import { Button } from "./ui/button";
-import { Package, Eye, User } from "lucide-react";
+import { Package, Eye, User, Tag } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "./ui/badge";
 import { LikeButton } from "./LikeButton";
 import { AddToCartButton } from "./AddToCartButton";
 import { ReportProductButton } from "./ReportProductButton";
+import { useProductCoupons } from "@/hooks/useProductCoupons";
 
 interface SellerProduct {
   id: string;
@@ -27,6 +28,7 @@ interface SellerProductCardProps {
 export function SellerProductCard({ product }: SellerProductCardProps) {
   const navigate = useNavigate();
   const isOutOfStock = product.stock === 0;
+  const { hasCoupons } = useProductCoupons(product.id, product.seller_id);
   
   const productUrl = product.slug ? `/produto/${product.slug}` : `/seller-product/${product.id}`;
 
@@ -60,6 +62,13 @@ export function SellerProductCard({ product }: SellerProductCardProps) {
           {product.stock > 0 && product.stock < 5 && (
             <Badge className="absolute top-2 right-2 bg-warning text-warning-foreground font-medium text-[10px] sm:text-xs px-1.5 py-0.5">
               Últimas {product.stock}!
+            </Badge>
+          )}
+
+          {hasCoupons && !isOutOfStock && (
+            <Badge className="absolute bottom-2 left-2 bg-green-600 text-white font-medium text-[10px] sm:text-xs px-1.5 py-0.5 flex items-center gap-1">
+              <Tag className="h-3 w-3" />
+              Cupons disponíveis
             </Badge>
           )}
 
