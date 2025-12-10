@@ -1417,6 +1417,10 @@ export type Database = {
     Functions: {
       assign_admin_by_email: { Args: { _email: string }; Returns: undefined }
       can_request_refund: { Args: { order_id: string }; Returns: boolean }
+      deduct_seller_coupon_balance: {
+        Args: { p_amount: number; p_seller_id: string }
+        Returns: undefined
+      }
       generate_meta_description: {
         Args: { description: string; name: string; price: number }
         Returns: string
