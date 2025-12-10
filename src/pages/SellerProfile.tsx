@@ -12,6 +12,8 @@ import { SellerBadges, calculateSellerBadges, SELLER_BADGES } from "@/components
 import { SellerLevelBadge, calculateSellerLevel, getNextLevel, calculateXP } from "@/components/seller/SellerLevel";
 import { SEOHead } from "@/components/SEOHead";
 import { FollowButton } from "@/components/FollowButton";
+import { OnlineIndicator } from "@/components/OnlineIndicator";
+import { useSellerPresence } from "@/hooks/useSellerPresence";
 
 interface SellerData {
   id: string;
@@ -43,6 +45,7 @@ const SellerProfile = () => {
   const [totalLikes, setTotalLikes] = useState(0);
   const [isTopLiked, setIsTopLiked] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
+  const { isOnline } = useSellerPresence(id);
 
   useEffect(() => {
     const fetchSellerData = async () => {
@@ -223,8 +226,9 @@ const SellerProfile = () => {
 
                   {/* Info Section */}
                   <div className="flex-1 min-w-0 pt-2 sm:pt-4">
-                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 break-words">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 break-words flex items-center gap-2 justify-center sm:justify-start">
                       {seller.full_name}
+                      <OnlineIndicator isOnline={isOnline} size="lg" showLabel />
                     </h1>
                     
                     {/* Seller Level */}

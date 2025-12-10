@@ -7,6 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, ShoppingBag, TrendingUp, Loader2, Users } from "lucide-react";
 import { SellerBadges, calculateSellerBadges } from "@/components/seller/SellerBadges";
 import { SellerLevelCompact, calculateSellerLevel } from "@/components/seller/SellerLevel";
+import { OnlineIndicator } from "./OnlineIndicator";
+import { useSellerPresence } from "@/hooks/useSellerPresence";
 
 interface TopSeller {
   id: string;
@@ -23,6 +25,7 @@ export const TopSellers = () => {
   const [sellers, setSellers] = useState<TopSeller[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { onlineSellers } = useSellerPresence();
 
   useEffect(() => {
     const fetchTopSellers = async () => {
@@ -184,7 +187,8 @@ export const TopSellers = () => {
                     )}
                   </div>
 
-                  <h3 className="font-semibold text-sm sm:text-base mb-1 truncate px-2">
+                  <h3 className="font-semibold text-sm sm:text-base mb-1 truncate px-2 flex items-center justify-center gap-1.5">
+                    <OnlineIndicator isOnline={onlineSellers.includes(seller.id)} size="sm" />
                     {seller.full_name}
                   </h3>
 

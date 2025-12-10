@@ -11,6 +11,7 @@ import { SellerNotifications } from "@/components/seller/SellerNotifications";
 import { SellerWarnings } from "@/components/seller/SellerWarnings";
 import { SellerRefunds } from "@/components/seller/SellerRefunds";
 import { SellerCoupons } from "@/components/seller/SellerCoupons";
+import { useTrackSellerPresence } from "@/hooks/useSellerPresence";
 
 export interface SellerProfile {
   id: string;
@@ -73,6 +74,9 @@ const SellerDashboard = () => {
 
     checkSeller();
   }, [navigate]);
+
+  // Track seller presence
+  useTrackSellerPresence(sellerProfile?.id || null);
 
   if (loading) {
     return (
