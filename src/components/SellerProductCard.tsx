@@ -37,7 +37,7 @@ export function SellerProductCard({ product }: SellerProductCardProps) {
         className="cursor-pointer"
         onClick={() => navigate(productUrl)}
       >
-        <div className="relative aspect-[4/3] overflow-hidden">
+        <div className="relative aspect-square overflow-hidden">
           {product.image_url ? (
             <img
               src={product.image_url}
@@ -71,17 +71,14 @@ export function SellerProductCard({ product }: SellerProductCardProps) {
         </div>
       </div>
 
-      <div className="p-3 sm:p-5 space-y-2 sm:space-y-4">
+      <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
         <div
           className="cursor-pointer"
           onClick={() => navigate(productUrl)}
         >
-          <h3 className="font-bold text-sm sm:text-lg line-clamp-1 group-hover:text-primary transition-colors">
+          <h3 className="font-bold text-sm sm:text-base line-clamp-1 group-hover:text-primary transition-colors">
             {product.name}
           </h3>
-          <p className="text-xs text-muted-foreground line-clamp-2 mt-1 sm:mt-2 min-h-[28px] sm:min-h-[40px] hidden sm:block">
-            {product.description || "Sem descrição"}
-          </p>
         </div>
 
         <Link
