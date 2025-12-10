@@ -9,6 +9,7 @@ import { SellerSales } from "@/components/seller/SellerSales";
 import { SellerBalance } from "@/components/seller/SellerBalance";
 import { SellerNotifications } from "@/components/seller/SellerNotifications";
 import { SellerWarnings } from "@/components/seller/SellerWarnings";
+import { SellerRefunds } from "@/components/seller/SellerRefunds";
 
 export interface SellerProfile {
   id: string;
@@ -97,6 +98,7 @@ const SellerDashboard = () => {
         {activeTab === "balance" && <SellerBalance seller={sellerProfile} />}
         {activeTab === "warnings" && <SellerWarnings seller={sellerProfile} />}
         {activeTab === "notifications" && <SellerNotifications sellerId={sellerProfile.id} />}
+        {activeTab === "refunds" && <SellerRefunds sellerId={sellerProfile.id} />}
       </main>
     </div>
   );
