@@ -36,6 +36,12 @@ export default function Checkout() {
   const [appliedCoupon, setAppliedCoupon] = useState<{
     code: string;
     discount_percentage: number;
+    discount_type: 'percentage' | 'fixed';
+    discount_value: number;
+    coupon_type: 'global' | 'seller';
+    coupon_id?: string;
+    seller_id?: string;
+    applicable_total?: number;
   } | null>(null);
   const [couponError, setCouponError] = useState('');
 
@@ -54,10 +60,25 @@ export default function Checkout() {
   const [ticketUrl, setTicketUrl] = useState('');
   const [currentOrderId, setCurrentOrderId] = useState('');
 
-  // Preços
-  const discountAmount = appliedCoupon 
-    ? (totalPrice * appliedCoupon.discount_percentage) / 100 
-    : 0;
+  // Preços - calculate discount based on coupon type
+  const calculateDiscount = () => {
+    if (!appliedCoupon) return 0;
+    
+    if (appliedCoupon.coupon_type === 'seller') {
+      // For seller coupons, only apply to applicable items
+      const applicableTotal = appliedCoupon.applicable_total || 0;
+      if (appliedCoupon.discount_type === 'percentage') {
+        return (applicableTotal * appliedCoupon.discount_value) / 100;
+      } else {
+        return Math.min(appliedCoupon.discount_value, applicableTotal);
+      }
+    } else {
+      // Global coupons apply to entire cart
+      return (totalPrice * appliedCoupon.discount_percentage) / 100;
+    }
+  };
+  
+  const discountAmount = calculateDiscount();
   const finalPrice = totalPrice - discountAmount;
 
   useEffect(() => {
@@ -110,37 +131,126 @@ export default function Checkout() {
     setCouponError('');
 
     try {
-      const { data, error } = await supabase
+      const code = couponCode.toUpperCase().trim();
+      
+      // First, try to find a seller coupon
+      const { data: sellerCoupon } = await supabase
+        .from('seller_coupons')
+        .select(`
+          id,
+          code,
+          discount_type,
+          discount_value,
+          expires_at,
+          is_active,
+          max_uses,
+          times_used,
+          seller_id
+        `)
+        .eq('code', code)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (sellerCoupon) {
+        // Validate seller coupon
+        if (sellerCoupon.expires_at && new Date(sellerCoupon.expires_at) < new Date()) {
+          setCouponError('Este cupom expirou');
+          setAppliedCoupon(null);
+          return;
+        }
+
+        if (sellerCoupon.max_uses && sellerCoupon.times_used >= sellerCoupon.max_uses) {
+          setCouponError('Este cupom atingiu o limite de uso');
+          setAppliedCoupon(null);
+          return;
+        }
+
+        // Check if coupon has product restrictions
+        const { data: couponProducts } = await supabase
+          .from('seller_coupon_products')
+          .select('product_id')
+          .eq('coupon_id', sellerCoupon.id);
+
+        // Find applicable items in cart
+        let applicableItems = items.filter(item => 
+          item.source === 'seller' && item.sellerId === sellerCoupon.seller_id
+        );
+
+        // If coupon has specific products, filter further
+        if (couponProducts && couponProducts.length > 0) {
+          const productIds = couponProducts.map(cp => cp.product_id);
+          applicableItems = applicableItems.filter(item => productIds.includes(item.id));
+        }
+
+        if (applicableItems.length === 0) {
+          setCouponError('Este cupom não é válido para os produtos do seu carrinho');
+          setAppliedCoupon(null);
+          return;
+        }
+
+        const applicableTotal = applicableItems.reduce(
+          (sum, item) => sum + item.price * item.quantity, 
+          0
+        );
+
+        const discountPercentage = sellerCoupon.discount_type === 'percentage' 
+          ? sellerCoupon.discount_value 
+          : (sellerCoupon.discount_value / applicableTotal) * 100;
+
+        setAppliedCoupon({
+          code: sellerCoupon.code,
+          discount_percentage: discountPercentage,
+          discount_type: sellerCoupon.discount_type as 'percentage' | 'fixed',
+          discount_value: sellerCoupon.discount_value,
+          coupon_type: 'seller',
+          coupon_id: sellerCoupon.id,
+          seller_id: sellerCoupon.seller_id,
+          applicable_total: applicableTotal
+        });
+
+        const discountText = sellerCoupon.discount_type === 'percentage' 
+          ? `${sellerCoupon.discount_value}%`
+          : `R$ ${sellerCoupon.discount_value.toFixed(2)}`;
+        toast.success(`Cupom de vendedor aplicado! ${discountText} de desconto`);
+        return;
+      }
+
+      // If no seller coupon found, try global coupons
+      const { data: globalCoupon, error } = await supabase
         .from('coupons')
         .select('code, discount_percentage, valid_until, is_active, usage_limit, times_used')
-        .eq('code', couponCode.toUpperCase().trim())
+        .eq('code', code)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
-      if (error || !data) {
+      if (error || !globalCoupon) {
         setCouponError('Cupom inválido ou não encontrado');
         setAppliedCoupon(null);
         return;
       }
 
-      if (data.valid_until && new Date(data.valid_until) < new Date()) {
+      if (globalCoupon.valid_until && new Date(globalCoupon.valid_until) < new Date()) {
         setCouponError('Este cupom expirou');
         setAppliedCoupon(null);
         return;
       }
 
-      if (data.usage_limit && data.times_used >= data.usage_limit) {
+      if (globalCoupon.usage_limit && globalCoupon.times_used >= globalCoupon.usage_limit) {
         setCouponError('Este cupom atingiu o limite de uso');
         setAppliedCoupon(null);
         return;
       }
 
       setAppliedCoupon({
-        code: data.code,
-        discount_percentage: data.discount_percentage
+        code: globalCoupon.code,
+        discount_percentage: globalCoupon.discount_percentage,
+        discount_type: 'percentage',
+        discount_value: globalCoupon.discount_percentage,
+        coupon_type: 'global'
       });
-      toast.success(`Cupom aplicado! ${data.discount_percentage}% de desconto`);
+      toast.success(`Cupom aplicado! ${globalCoupon.discount_percentage}% de desconto`);
     } catch (error) {
+      console.error('Coupon error:', error);
       setCouponError('Erro ao verificar cupom');
     } finally {
       setCouponLoading(false);
@@ -207,18 +317,49 @@ export default function Checkout() {
       if (error) throw error;
 
       if (data.success) {
+        // Update coupon usage tracking
         if (appliedCoupon) {
-          const { data: couponData } = await supabase
-            .from('coupons')
-            .select('times_used')
-            .eq('code', appliedCoupon.code)
-            .single();
-          
-          if (couponData) {
-            await supabase
+          if (appliedCoupon.coupon_type === 'seller' && appliedCoupon.coupon_id) {
+            // Update seller coupon usage
+            const { data: sellerCouponData } = await supabase
+              .from('seller_coupons')
+              .select('times_used, total_discount_given')
+              .eq('id', appliedCoupon.coupon_id)
+              .single();
+            
+            if (sellerCouponData) {
+              await supabase
+                .from('seller_coupons')
+                .update({ 
+                  times_used: sellerCouponData.times_used + 1,
+                  total_discount_given: sellerCouponData.total_discount_given + discountAmount
+                })
+                .eq('id', appliedCoupon.coupon_id);
+              
+              // Record usage in seller_coupon_usage
+              await supabase
+                .from('seller_coupon_usage')
+                .insert({
+                  coupon_id: appliedCoupon.coupon_id,
+                  order_id: data.orderId,
+                  user_id: user?.id,
+                  discount_amount: discountAmount
+                });
+            }
+          } else {
+            // Update global coupon usage
+            const { data: couponData } = await supabase
               .from('coupons')
-              .update({ times_used: couponData.times_used + 1 })
-              .eq('code', appliedCoupon.code);
+              .select('times_used')
+              .eq('code', appliedCoupon.code)
+              .single();
+            
+            if (couponData) {
+              await supabase
+                .from('coupons')
+                .update({ times_used: couponData.times_used + 1 })
+                .eq('code', appliedCoupon.code);
+            }
           }
         }
 
@@ -596,10 +737,20 @@ export default function Checkout() {
                     
                     {appliedCoupon ? (
                       <div className="flex items-center justify-between p-2 bg-success/10 border border-success/30 rounded-lg">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <Check className="h-4 w-4 text-success" />
                           <span className="text-sm font-medium">{appliedCoupon.code}</span>
-                          <span className="text-sm text-success">-{appliedCoupon.discount_percentage}%</span>
+                          <span className="text-sm text-success">
+                            {appliedCoupon.discount_type === 'percentage' 
+                              ? `-${appliedCoupon.discount_value}%`
+                              : `-R$ ${appliedCoupon.discount_value.toFixed(2)}`
+                            }
+                          </span>
+                          {appliedCoupon.coupon_type === 'seller' && (
+                            <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                              Cupom de vendedor
+                            </span>
+                          )}
                         </div>
                         <Button variant="ghost" size="sm" onClick={removeCoupon} className="h-6 w-6 p-0">
                           <X className="h-3 w-3" />
@@ -641,7 +792,18 @@ export default function Checkout() {
                   </div>
                   {appliedCoupon && (
                     <div className="flex justify-between text-sm text-success">
-                      <span>Desconto ({appliedCoupon.discount_percentage}%)</span>
+                      <span>
+                        Desconto
+                        {appliedCoupon.discount_type === 'percentage' 
+                          ? ` (${appliedCoupon.discount_value}%)`
+                          : ''
+                        }
+                        {appliedCoupon.coupon_type === 'seller' && appliedCoupon.applicable_total && appliedCoupon.applicable_total < totalPrice && (
+                          <span className="text-xs text-muted-foreground ml-1">
+                            (aplicado em R$ {appliedCoupon.applicable_total.toFixed(2)})
+                          </span>
+                        )}
+                      </span>
                       <span>-R$ {discountAmount.toFixed(2)}</span>
                     </div>
                   )}
