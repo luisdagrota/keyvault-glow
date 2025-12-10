@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, ShoppingCart, FileText, Home, MessageSquare, Ticket, Star, Users, PackageCheck, Flag, Bell, LifeBuoy, ShieldAlert, Image } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, FileText, Home, MessageSquare, Ticket, Star, Users, PackageCheck, Flag, Bell, LifeBuoy, ShieldAlert, Image, RefreshCcw } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -28,6 +28,7 @@ export function AdminSidebar() {
   const [pendingReports, setPendingReports] = useState(0);
   const [openTickets, setOpenTickets] = useState(0);
   const [pendingFraudAlerts, setPendingFraudAlerts] = useState(0);
+  const [pendingRefunds, setPendingRefunds] = useState(0);
 
   useEffect(() => {
     loadNotifications();
@@ -72,6 +73,11 @@ export function AdminSidebar() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'fraud_alerts' },
+        () => loadNotifications()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'refund_requests' },
         () => loadNotifications()
       )
       .subscribe();
@@ -148,6 +154,14 @@ export function AdminSidebar() {
       .eq('is_resolved', false);
 
     setPendingFraudAlerts(fraudCount || 0);
+
+    // Load pending refunds count
+    const { count: refundsCount } = await supabase
+      .from('refund_requests')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending');
+
+    setPendingRefunds(refundsCount || 0);
   };
 
   const menuItems = [
@@ -158,6 +172,7 @@ export function AdminSidebar() {
     { title: "Produtos", url: "/admin/products", icon: Package },
     { title: "Produtos Vendedores", url: "/admin/seller-products", icon: PackageCheck, badge: pendingSellerProducts },
     { title: "Pedidos", url: "/admin/orders", icon: ShoppingCart },
+    { title: "Reembolsos", url: "/admin/refunds", icon: RefreshCcw, badge: pendingRefunds },
     { title: "Cupons", url: "/admin/coupons", icon: Ticket },
     { title: "Avaliações", url: "/admin/reviews", icon: Star, badge: pendingReviews },
     { title: "Vendedores", url: "/admin/sellers", icon: Users, badge: pendingSellers + pendingWithdrawals },
