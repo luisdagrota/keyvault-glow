@@ -175,8 +175,14 @@ export function AdminNotifications() {
     setUnreadCount(prev => prev + 1);
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const markAllAsRead = async () => {
+    // Reset unread counts in database
+    await supabase
+      .from('order_chat_status')
+      .update({ unread_admin_count: 0 })
+      .gt('unread_admin_count', 0);
+    
+    setNotifications([]);
     setUnreadCount(0);
   };
 
@@ -225,9 +231,9 @@ export function AdminNotifications() {
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between">
             <h4 className="font-semibold">Notificações Admin</h4>
-            {unreadCount > 0 && (
+            {notifications.length > 0 && (
               <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-xs h-7">
-                Marcar como lidas
+                Limpar tudo
               </Button>
             )}
           </div>
