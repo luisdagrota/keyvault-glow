@@ -27,8 +27,15 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Trash2, Edit, Pause, Play, Tag } from "lucide-react";
+import { Plus, Trash2, Edit, Pause, Play, Tag, Info, AlertCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface Coupon {
   id: string;
@@ -410,8 +417,76 @@ export function SellerCoupons({ sellerId }: SellerCouponsProps) {
               </div>
             </form>
           </DialogContent>
-        </Dialog>
+      </Dialog>
       </div>
+
+      {/* How Coupons Work - Explanation */}
+      <Accordion type="single" collapsible className="bg-card border rounded-lg">
+        <AccordionItem value="how-it-works" className="border-0">
+          <AccordionTrigger className="px-4 hover:no-underline">
+            <div className="flex items-center gap-2 text-left">
+              <Info className="w-5 h-5 text-primary" />
+              <span className="font-semibold">Como funcionam os cupons?</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <div className="space-y-4">
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Importante sobre descontos</AlertTitle>
+                <AlertDescription>
+                  Quando um cliente usa seu cupom, o valor do desconto é <strong>deduzido do seu saldo pendente</strong>. 
+                  Você assume o custo do desconto oferecido.
+                </AlertDescription>
+              </Alert>
+
+              <div className="grid gap-3 text-sm">
+                <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary shrink-0">1</div>
+                  <div>
+                    <p className="font-medium">Crie um cupom</p>
+                    <p className="text-muted-foreground">Defina o código, tipo de desconto (% ou R$), valor e limite de usos.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary shrink-0">2</div>
+                  <div>
+                    <p className="font-medium">Divulgue para seus clientes</p>
+                    <p className="text-muted-foreground">Compartilhe o código do cupom com seus clientes nas redes sociais ou mensagens.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary shrink-0">3</div>
+                  <div>
+                    <p className="font-medium">Cliente aplica no checkout</p>
+                    <p className="text-muted-foreground">O cliente insere o código na página de pagamento e recebe o desconto automaticamente.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary shrink-0">4</div>
+                  <div>
+                    <p className="font-medium">Desconto debitado do seu saldo</p>
+                    <p className="text-muted-foreground">Após a compra ser aprovada, o valor do desconto é automaticamente deduzido do seu saldo pendente.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-xs text-muted-foreground border-t pt-3 mt-3">
+                <p><strong>Dicas:</strong></p>
+                <ul className="list-disc list-inside space-y-1 mt-1">
+                  <li>Use cupons com limite de usos para controlar seus gastos com promoções</li>
+                  <li>Defina uma data de expiração para criar senso de urgência</li>
+                  <li>Você pode pausar um cupom a qualquer momento sem excluí-lo</li>
+                  <li>Selecione produtos específicos ou deixe em branco para aplicar a todos</li>
+                </ul>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
