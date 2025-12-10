@@ -37,7 +37,7 @@ export const SELLER_LEVELS: SellerLevelData[] = [
     id: "silver",
     name: "Prata",
     icon: Award,
-    minSales: 10,
+    minSales: 100,
     colors: {
       primary: "from-slate-300 via-gray-200 to-slate-400",
       secondary: "from-slate-400 to-gray-300",
@@ -51,7 +51,7 @@ export const SELLER_LEVELS: SellerLevelData[] = [
     id: "gold",
     name: "Ouro",
     icon: Crown,
-    minSales: 30,
+    minSales: 600,
     colors: {
       primary: "from-yellow-400 via-amber-300 to-yellow-500",
       secondary: "from-yellow-500 to-amber-400",
@@ -65,7 +65,7 @@ export const SELLER_LEVELS: SellerLevelData[] = [
     id: "platinum",
     name: "Platina",
     icon: Sparkles,
-    minSales: 30,
+    minSales: 1000,
     minRating: 4.8,
     colors: {
       primary: "from-cyan-300 via-teal-200 to-cyan-400",
@@ -80,7 +80,7 @@ export const SELLER_LEVELS: SellerLevelData[] = [
     id: "diamond",
     name: "Diamante",
     icon: Gem,
-    minSales: 50,
+    minSales: 2500,
     minRating: 4.5,
     isTopRequired: true,
     colors: {
@@ -100,16 +100,16 @@ export const calculateSellerLevel = (
   isTopSeller: boolean
 ): SellerLevelData => {
   // Check from highest to lowest
-  if (isTopSeller && totalSales >= 50 && averageRating >= 4.5) {
+  if (isTopSeller && totalSales >= 2500 && averageRating >= 4.5) {
     return SELLER_LEVELS[4]; // Diamond
   }
-  if (totalSales >= 30 && averageRating >= 4.8) {
+  if (totalSales >= 1000 && averageRating >= 4.8) {
     return SELLER_LEVELS[3]; // Platinum
   }
-  if (totalSales >= 30) {
+  if (totalSales >= 600) {
     return SELLER_LEVELS[2]; // Gold
   }
-  if (totalSales >= 10) {
+  if (totalSales >= 100) {
     return SELLER_LEVELS[1]; // Silver
   }
   return SELLER_LEVELS[0]; // Bronze
@@ -247,10 +247,10 @@ export const SellerLevelBadge = ({
             <span className={cn("font-bold text-lg", level.colors.text)}>{level.name}</span>
             <p className="text-xs text-muted-foreground mt-1">
               {level.id === "bronze" && "Nível inicial"}
-              {level.id === "silver" && "+10 vendas necessárias"}
-              {level.id === "gold" && "+30 vendas necessárias"}
-              {level.id === "platinum" && "+30 vendas e 4.8+ avaliação"}
-              {level.id === "diamond" && "Top 5 vendedores + 50 vendas"}
+              {level.id === "silver" && "100+ vendas necessárias"}
+              {level.id === "gold" && "600+ vendas necessárias"}
+              {level.id === "platinum" && "1000+ vendas e 4.8+ avaliação"}
+              {level.id === "diamond" && "Top 5 vendedores + 2500 vendas"}
             </p>
             <div className="mt-2 text-xs">
               <span className="text-primary font-semibold">{xp} XP</span>
