@@ -694,6 +694,99 @@ export type Database = {
           },
         ]
       }
+      seller_coupon_products: {
+        Row: {
+          coupon_id: string
+          created_at: string
+          id: string
+          product_id: string
+        }
+        Insert: {
+          coupon_id: string
+          created_at?: string
+          id?: string
+          product_id: string
+        }
+        Update: {
+          coupon_id?: string
+          created_at?: string
+          id?: string
+          product_id?: string
+        }
+        Relationships: []
+      }
+      seller_coupon_usage: {
+        Row: {
+          coupon_id: string
+          created_at: string
+          discount_amount: number
+          id: string
+          order_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          coupon_id: string
+          created_at?: string
+          discount_amount: number
+          id?: string
+          order_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          coupon_id?: string
+          created_at?: string
+          discount_amount?: number
+          id?: string
+          order_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      seller_coupons: {
+        Row: {
+          code: string
+          created_at: string
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          seller_id: string
+          times_used: number
+          total_discount_given: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          discount_type?: string
+          discount_value: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          seller_id: string
+          times_used?: number
+          total_discount_given?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          seller_id?: string
+          times_used?: number
+          total_discount_given?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       seller_followers: {
         Row: {
           created_at: string

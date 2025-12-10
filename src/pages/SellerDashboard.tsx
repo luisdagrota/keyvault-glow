@@ -10,6 +10,7 @@ import { SellerBalance } from "@/components/seller/SellerBalance";
 import { SellerNotifications } from "@/components/seller/SellerNotifications";
 import { SellerWarnings } from "@/components/seller/SellerWarnings";
 import { SellerRefunds } from "@/components/seller/SellerRefunds";
+import { SellerCoupons } from "@/components/seller/SellerCoupons";
 
 export interface SellerProfile {
   id: string;
@@ -94,6 +95,7 @@ const SellerDashboard = () => {
           });
         }} />}
         {activeTab === "products" && <SellerProducts sellerId={sellerProfile.id} />}
+        {activeTab === "coupons" && <SellerCoupons sellerId={sellerProfile.id} />}
         {activeTab === "sales" && <SellerSales sellerId={sellerProfile.id} />}
         {activeTab === "balance" && <SellerBalance seller={sellerProfile} />}
         {activeTab === "warnings" && <SellerWarnings seller={sellerProfile} />}
