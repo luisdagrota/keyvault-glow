@@ -6,6 +6,8 @@ import { LikeButton } from "./LikeButton";
 import { AddToCartButton } from "./AddToCartButton";
 import { ReportProductButton } from "./ReportProductButton";
 import { useProductCoupons } from "@/hooks/useProductCoupons";
+import { OnlineIndicator } from "./OnlineIndicator";
+import { useSellerPresence } from "@/hooks/useSellerPresence";
 
 interface SellerProduct {
   id: string;
@@ -29,6 +31,7 @@ export function SellerProductCard({ product }: SellerProductCardProps) {
   const navigate = useNavigate();
   const isOutOfStock = product.stock === 0;
   const { hasCoupons } = useProductCoupons(product.id, product.seller_id);
+  const { isOnline } = useSellerPresence(product.seller_id);
   
   const productUrl = product.slug ? `/produto/${product.slug}` : `/seller-product/${product.id}`;
 
@@ -93,6 +96,7 @@ export function SellerProductCard({ product }: SellerProductCardProps) {
           className="mt-1 flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground hover:text-primary transition-colors"
           onClick={(e) => e.stopPropagation()}
         >
+          <OnlineIndicator isOnline={isOnline} size="sm" />
           <User className="h-3 w-3" />
           <span className="truncate">por {product.seller_name}</span>
         </Link>
