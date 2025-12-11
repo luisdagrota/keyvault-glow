@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -20,9 +20,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, RefreshCcw, Upload, X, AlertTriangle } from "lucide-react";
+import { Loader2, RefreshCcw, Upload, X, AlertTriangle, Clock, CheckCircle, XCircle, HelpCircle } from "lucide-react";
 
 interface RefundRequestButtonProps {
   orderId: string;
@@ -30,6 +31,14 @@ interface RefundRequestButtonProps {
   sellerId: string | null;
   paymentStatus: string;
   deliveredAt?: string;
+}
+
+interface ExistingRefund {
+  id: string;
+  status: string;
+  reason: string;
+  created_at: string;
+  admin_notes?: string;
 }
 
 const REFUND_REASONS = [
@@ -50,6 +59,33 @@ const PIX_KEY_TYPES = [
   { value: "random", label: "Chave aleatória" },
 ];
 
+const REFUND_STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string; bgColor: string }> = {
+  pending: { 
+    label: "Em análise", 
+    icon: <Clock className="h-4 w-4" />, 
+    color: "text-amber-600",
+    bgColor: "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800"
+  },
+  approved: { 
+    label: "Aprovado", 
+    icon: <CheckCircle className="h-4 w-4" />, 
+    color: "text-green-600",
+    bgColor: "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800"
+  },
+  rejected: { 
+    label: "Rejeitado", 
+    icon: <XCircle className="h-4 w-4" />, 
+    color: "text-red-600",
+    bgColor: "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800"
+  },
+  more_info_requested: { 
+    label: "Aguardando informações", 
+    icon: <HelpCircle className="h-4 w-4" />, 
+    color: "text-blue-600",
+    bgColor: "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800"
+  },
+};
+
 export function RefundRequestButton({
   orderId,
   orderAmount,
@@ -65,6 +101,51 @@ export function RefundRequestButton({
   const [pixKey, setPixKey] = useState("");
   const [proofs, setProofs] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [existingRefund, setExistingRefund] = useState<ExistingRefund | null>(null);
+  const [checkingRefund, setCheckingRefund] = useState(true);
+
+  // Check for existing refund request
+  useEffect(() => {
+    const checkExistingRefund = async () => {
+      const { data, error } = await supabase
+        .from("refund_requests")
+        .select("id, status, reason, created_at, admin_notes")
+        .eq("order_id", orderId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data) {
+        setExistingRefund(data);
+      }
+      setCheckingRefund(false);
+    };
+
+    checkExistingRefund();
+
+    // Subscribe to changes
+    const channel = supabase
+      .channel(`refund-${orderId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'refund_requests',
+          filter: `order_id=eq.${orderId}`
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            setExistingRefund(payload.new as ExistingRefund);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [orderId]);
 
   // Check if refund is still available (within 48h after delivery)
   const canRequestRefund = () => {
@@ -221,6 +302,50 @@ export function RefundRequestButton({
       setUploading(false);
     }
   };
+
+  if (checkingRefund) {
+    return null;
+  }
+
+  // Show existing refund status if there's one
+  if (existingRefund && existingRefund.status !== 'rejected') {
+    const statusConfig = REFUND_STATUS_CONFIG[existingRefund.status] || REFUND_STATUS_CONFIG.pending;
+    
+    return (
+      <Card className={`border ${statusConfig.bgColor}`}>
+        <CardContent className="p-3">
+          <div className="flex items-start gap-3">
+            <div className={`${statusConfig.color} mt-0.5`}>
+              {statusConfig.icon}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`font-medium text-sm ${statusConfig.color}`}>
+                  Reembolso {statusConfig.label}
+                </span>
+                <Badge variant="outline" className="text-xs">
+                  {existingRefund.reason}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Solicitado em {new Date(existingRefund.created_at).toLocaleDateString('pt-BR')}
+              </p>
+              {existingRefund.status === 'more_info_requested' && existingRefund.admin_notes && (
+                <p className="text-xs text-blue-600 mt-1">
+                  📝 {existingRefund.admin_notes}
+                </p>
+              )}
+              {existingRefund.status === 'approved' && (
+                <p className="text-xs text-green-600 mt-1">
+                  ✅ O valor será enviado para sua chave PIX em breve.
+                </p>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!canRequestRefund()) {
     return null;
