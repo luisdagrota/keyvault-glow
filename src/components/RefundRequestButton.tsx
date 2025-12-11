@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -77,6 +78,31 @@ export function RefundRequestButton({
     }
     return false;
   };
+
+  // Calculate remaining hours for refund request
+  const getRemainingTime = (): { hours: number; text: string } | null => {
+    if (paymentStatus !== "delivered" || !deliveredAt) return null;
+    
+    const deliveryDate = new Date(deliveredAt);
+    const now = new Date();
+    const hoursPassed = (now.getTime() - deliveryDate.getTime()) / (1000 * 60 * 60);
+    const hoursRemaining = Math.max(0, 48 - hoursPassed);
+    
+    if (hoursRemaining <= 0) return null;
+    
+    if (hoursRemaining < 1) {
+      const minutes = Math.floor(hoursRemaining * 60);
+      return { hours: hoursRemaining, text: `${minutes}min restantes` };
+    } else if (hoursRemaining < 24) {
+      return { hours: hoursRemaining, text: `${Math.floor(hoursRemaining)}h restantes` };
+    } else {
+      const days = Math.floor(hoursRemaining / 24);
+      const hours = Math.floor(hoursRemaining % 24);
+      return { hours: hoursRemaining, text: `${days}d ${hours}h restantes` };
+    }
+  };
+
+  const remainingTime = getRemainingTime();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -203,10 +229,26 @@ export function RefundRequestButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="text-amber-600 border-amber-600 hover:bg-amber-50">
-          <RefreshCcw className="h-4 w-4 mr-2" />
-          Solicitar Reembolso
-        </Button>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+          <Button variant="outline" size="sm" className="text-amber-600 border-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/20">
+            <RefreshCcw className="h-4 w-4 mr-2" />
+            Solicitar Reembolso
+          </Button>
+          {remainingTime && (
+            <Badge 
+              variant="outline" 
+              className={`text-xs ${
+                remainingTime.hours < 6 
+                  ? 'border-destructive text-destructive animate-pulse' 
+                  : remainingTime.hours < 24 
+                    ? 'border-amber-500 text-amber-500' 
+                    : 'border-muted-foreground text-muted-foreground'
+              }`}
+            >
+              ⏱️ {remainingTime.text}
+            </Badge>
+          )}
+        </div>
       </DialogTrigger>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
