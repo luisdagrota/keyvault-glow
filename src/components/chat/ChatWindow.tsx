@@ -9,6 +9,7 @@ import { Send, Paperclip, Package, X, Image as ImageIcon, FileText, Download } f
 import { Badge } from "@/components/ui/badge";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import { TypingIndicator } from "./TypingIndicator";
+import { RefundRequestButton } from "@/components/RefundRequestButton";
 import {
   Dialog,
   DialogContent,
@@ -223,7 +224,7 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
     const loadOrder = async () => {
       const { data } = await supabase
         .from('orders')
-        .select('payment_status')
+        .select('payment_status, seller_id, transaction_amount, updated_at')
         .eq('id', orderId)
         .single();
       
@@ -254,6 +255,7 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
   }, [orderId]);
 
   const isDelivered = order?.payment_status === 'delivered';
+  const canShowRefundButton = !isAdmin && order && ['approved', 'delivered'].includes(order.payment_status);
 
   // Group messages by date
   const groupedMessages: { date: string; messages: ChatMessage[] }[] = [];
@@ -288,6 +290,19 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
 
   return (
     <>
+      {/* Refund Request Button - Above Chat for Customers */}
+      {canShowRefundButton && (
+        <div className="mb-4">
+          <RefundRequestButton
+            orderId={orderId}
+            orderAmount={order.transaction_amount}
+            sellerId={order.seller_id}
+            paymentStatus={order.payment_status}
+            deliveredAt={order.payment_status === 'delivered' ? order.updated_at : undefined}
+          />
+        </div>
+      )}
+
       <Card className="card-gaming flex flex-col h-[calc(100vh-200px)] sm:h-[600px] min-h-[400px] max-h-[700px]">
         <CardHeader className="border-b border-border p-3 sm:p-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
