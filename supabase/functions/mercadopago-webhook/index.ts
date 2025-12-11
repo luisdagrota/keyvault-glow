@@ -125,6 +125,37 @@ serve(async (req) => {
         console.log('👤 Order is linked to user:', order.user_id);
       }
 
+      // Create seller_sales record if this is a seller product
+      if (order.seller_id) {
+        console.log('🏪 Creating seller sale record for seller:', order.seller_id);
+        
+        const saleAmount = order.transaction_amount;
+        const feePercentage = 6.99;
+        const feeAmount = saleAmount * (feePercentage / 100);
+        const netAmount = saleAmount - feeAmount;
+
+        const { error: saleError } = await supabase
+          .from('seller_sales')
+          .insert({
+            seller_id: order.seller_id,
+            product_id: order.product_id,
+            product_name: order.product_name,
+            buyer_id: order.user_id,
+            buyer_name: order.customer_name || 'Cliente',
+            buyer_email: order.customer_email,
+            sale_amount: saleAmount,
+            fee_amount: feeAmount,
+            net_amount: netAmount,
+            status: 'approved'
+          });
+
+        if (saleError) {
+          console.error('❌ Error creating seller sale:', saleError);
+        } else {
+          console.log('✅ Seller sale created successfully! Net amount:', netAmount);
+        }
+      }
+
       // Deduct seller coupon discount from seller's pending balance
       if (order.coupon_code && order.discount_amount && order.discount_amount > 0 && order.seller_id) {
         console.log('🏷️ Checking seller coupon:', order.coupon_code);

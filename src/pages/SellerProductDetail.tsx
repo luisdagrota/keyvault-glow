@@ -118,6 +118,7 @@ export default function SellerProductDetail() {
     imageUrl: product.image_url || "",
     stock: product.stock,
     sellerId: product.seller_id,
+    sellerName: product.seller_profiles?.full_name || null,
   } : null;
 
   if (loading) {

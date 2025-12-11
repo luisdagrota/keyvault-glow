@@ -9,6 +9,7 @@ export interface Product {
   platform?: string;
   genre?: string;
   sellerId?: string;
+  sellerName?: string;
 }
 
 export interface CartItem extends Product {

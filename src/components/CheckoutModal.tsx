@@ -173,6 +173,8 @@ export const CheckoutModal = ({ product, open, onOpenChange }: CheckoutModalProp
           customerName,
           paymentMethod,
           userId: user?.id,
+          sellerId: product.sellerId || null,
+          sellerName: product.sellerName || null,
           couponCode: appliedCoupon?.code || null,
           discountAmount: discountAmount,
           ...(paymentMethod === 'credit_card' && {
