@@ -14,7 +14,8 @@ import {
   Bell,
   AlertTriangle,
   RefreshCcw,
-  Tag
+  Tag,
+  MessageSquare
 } from "lucide-react";
 import {
   Sheet,
@@ -34,14 +35,19 @@ export const SellerSidebar = ({ activeTab, setActiveTab, sellerId }: SellerSideb
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [unreadChats, setUnreadChats] = useState(0);
 
   useEffect(() => {
     fetchUnreadCount();
+    fetchUnreadChats();
 
     const channel = supabase
       .channel('seller-sidebar-notifications')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'seller_notifications' }, () => {
         fetchUnreadCount();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'order_chat_status' }, () => {
+        fetchUnreadChats();
       })
       .subscribe();
 
@@ -60,10 +66,34 @@ export const SellerSidebar = ({ activeTab, setActiveTab, sellerId }: SellerSideb
     setUnreadNotifications(count || 0);
   };
 
+  const fetchUnreadChats = async () => {
+    // Get orders for this seller
+    const { data: orders } = await supabase
+      .from("orders")
+      .select("id")
+      .eq("seller_id", sellerId)
+      .in("payment_status", ["approved", "delivered", "refund_requested"]);
+    
+    if (!orders || orders.length === 0) {
+      setUnreadChats(0);
+      return;
+    }
+
+    const orderIds = orders.map(o => o.id);
+    const { data: chatStatuses } = await supabase
+      .from("order_chat_status")
+      .select("unread_seller_count")
+      .in("order_id", orderIds);
+
+    const total = (chatStatuses || []).reduce((sum, s) => sum + (s.unread_seller_count || 0), 0);
+    setUnreadChats(total);
+  };
+
   const menuItems = [
     { id: "overview", label: "Dashboard", icon: LayoutDashboard },
     { id: "products", label: "Meus Produtos", icon: Package },
     { id: "coupons", label: "Cupons", icon: Tag },
+    { id: "chats", label: "Chats", icon: MessageSquare, badge: unreadChats },
     { id: "sales", label: "Minhas Vendas", icon: ShoppingCart },
     { id: "balance", label: "Saldo", icon: Wallet },
     { id: "refunds", label: "Reembolsos", icon: RefreshCcw },

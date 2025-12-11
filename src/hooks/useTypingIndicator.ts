@@ -3,11 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface TypingUser {
   user_id: string;
-  user_type: "customer" | "admin";
+  user_type: "customer" | "admin" | "seller";
   is_typing: boolean;
 }
 
-export function useTypingIndicator(orderId: string, isAdmin: boolean) {
+type UserType = "customer" | "admin" | "seller";
+
+export function useTypingIndicator(orderId: string, userType: UserType) {
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTypingRef = useRef<boolean>(false);
@@ -70,7 +72,7 @@ export function useTypingIndicator(orderId: string, isAdmin: boolean) {
         .upsert({
           order_id: orderId,
           user_id: user.id,
-          user_type: isAdmin ? 'admin' : 'customer',
+          user_type: userType,
           is_typing: isTyping,
           updated_at: new Date().toISOString()
         }, {
@@ -79,7 +81,7 @@ export function useTypingIndicator(orderId: string, isAdmin: boolean) {
     } catch (error) {
       console.error('Error updating typing status:', error);
     }
-  }, [orderId, isAdmin]);
+  }, [orderId, userType]);
 
   // Handle typing with debounce
   const handleTyping = useCallback(() => {
@@ -104,10 +106,9 @@ export function useTypingIndicator(orderId: string, isAdmin: boolean) {
     };
   }, [setTyping]);
 
-  // Check if the other party is typing
+  // Check if any other party is typing
   const isOtherTyping = typingUsers.some(u => {
-    const otherType = isAdmin ? 'customer' : 'admin';
-    return u.user_type === otherType && u.is_typing;
+    return u.user_type !== userType && u.is_typing;
   });
 
   return {

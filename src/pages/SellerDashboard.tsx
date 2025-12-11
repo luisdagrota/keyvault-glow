@@ -11,6 +11,7 @@ import { SellerNotifications } from "@/components/seller/SellerNotifications";
 import { SellerWarnings } from "@/components/seller/SellerWarnings";
 import { SellerRefunds } from "@/components/seller/SellerRefunds";
 import { SellerCoupons } from "@/components/seller/SellerCoupons";
+import { SellerChats } from "@/components/seller/SellerChats";
 import { useTrackSellerPresence } from "@/hooks/useSellerPresence";
 
 export interface SellerProfile {
@@ -100,6 +101,7 @@ const SellerDashboard = () => {
         }} />}
         {activeTab === "products" && <SellerProducts sellerId={sellerProfile.id} />}
         {activeTab === "coupons" && <SellerCoupons sellerId={sellerProfile.id} />}
+        {activeTab === "chats" && <SellerChats sellerId={sellerProfile.id} />}
         {activeTab === "sales" && <SellerSales sellerId={sellerProfile.id} />}
         {activeTab === "balance" && <SellerBalance seller={sellerProfile} />}
         {activeTab === "warnings" && <SellerWarnings seller={sellerProfile} />}
