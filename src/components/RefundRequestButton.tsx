@@ -23,7 +23,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, RefreshCcw, Upload, X, AlertTriangle, Clock, CheckCircle, XCircle, HelpCircle } from "lucide-react";
+import { Loader2, RefreshCcw, Link, X, AlertTriangle, Clock, CheckCircle, XCircle, HelpCircle, Plus } from "lucide-react";
 
 interface RefundRequestButtonProps {
   orderId: string;
@@ -99,8 +99,8 @@ export function RefundRequestButton({
   const [description, setDescription] = useState("");
   const [pixKeyType, setPixKeyType] = useState("");
   const [pixKey, setPixKey] = useState("");
-  const [proofs, setProofs] = useState<File[]>([]);
-  const [uploading, setUploading] = useState(false);
+  const [proofUrls, setProofUrls] = useState<string[]>(['']);
+  const [newUrl, setNewUrl] = useState("");
   const [existingRefund, setExistingRefund] = useState<ExistingRefund | null>(null);
   const [checkingRefund, setCheckingRefund] = useState(true);
 
@@ -185,43 +185,28 @@ export function RefundRequestButton({
 
   const remainingTime = getRemainingTime();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length + proofs.length > 5) {
-      toast.error("Máximo de 5 arquivos permitidos");
+  const addProofUrl = () => {
+    if (!newUrl.trim()) {
+      toast.error("Digite uma URL válida");
       return;
     }
-    setProofs([...proofs, ...files]);
-  };
-
-  const removeFile = (index: number) => {
-    setProofs(proofs.filter((_, i) => i !== index));
-  };
-
-  const uploadProofs = async (): Promise<string[]> => {
-    const urls: string[] = [];
-    
-    for (const file of proofs) {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${orderId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('refund-proofs')
-        .upload(fileName, file);
-      
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        throw new Error("Falha ao enviar arquivo: " + file.name);
-      }
-      
-      const { data } = supabase.storage
-        .from('refund-proofs')
-        .getPublicUrl(fileName);
-      
-      urls.push(data.publicUrl);
+    if (proofUrls.filter(u => u.trim()).length >= 5) {
+      toast.error("Máximo de 5 URLs permitidas");
+      return;
     }
-    
-    return urls;
+    // Basic URL validation
+    try {
+      new URL(newUrl);
+    } catch {
+      toast.error("URL inválida");
+      return;
+    }
+    setProofUrls([...proofUrls.filter(u => u.trim()), newUrl.trim()]);
+    setNewUrl("");
+  };
+
+  const removeProofUrl = (index: number) => {
+    setProofUrls(proofUrls.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async () => {
@@ -233,8 +218,9 @@ export function RefundRequestButton({
       toast.error("Informe sua chave PIX para receber o reembolso");
       return;
     }
-    if (proofs.length === 0) {
-      toast.error("Envie pelo menos uma prova (print, foto, vídeo)");
+    const validUrls = proofUrls.filter(u => u.trim());
+    if (validUrls.length === 0) {
+      toast.error("Adicione pelo menos uma URL de prova (imagem ou vídeo)");
       return;
     }
 
@@ -246,10 +232,7 @@ export function RefundRequestButton({
         return;
       }
 
-      // Upload proofs
-      setUploading(true);
-      const proofUrls = await uploadProofs();
-      setUploading(false);
+      const validProofUrls = proofUrls.filter(u => u.trim());
 
       // Create refund request
       const { error } = await supabase
@@ -260,7 +243,7 @@ export function RefundRequestButton({
           seller_id: sellerId,
           reason,
           description,
-          proofs: proofUrls,
+          proofs: validProofUrls,
           customer_pix_key: pixKey,
           pix_key_type: pixKeyType,
           order_amount: orderAmount,
@@ -293,13 +276,13 @@ export function RefundRequestButton({
       setDescription("");
       setPixKey("");
       setPixKeyType("");
-      setProofs([]);
+      setProofUrls(['']);
+      setNewUrl("");
     } catch (error: any) {
       console.error("Error:", error);
       toast.error(error.message || "Erro ao enviar solicitação");
     } finally {
       setLoading(false);
-      setUploading(false);
     }
   };
 
@@ -414,33 +397,52 @@ export function RefundRequestButton({
             />
           </div>
 
-          {/* Proofs */}
+          {/* Proofs URLs */}
           <div className="space-y-2">
-            <Label>Provas (obrigatório) *</Label>
+            <Label>URLs das provas (obrigatório) *</Label>
             <p className="text-xs text-muted-foreground">
-              Envie prints, fotos ou vídeos que comprovem o problema (máx. 5 arquivos)
+              Cole URLs de imagens ou vídeos que comprovem o problema (máx. 5 URLs)
             </p>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {proofs.map((file, i) => (
-                <div key={i} className="flex items-center gap-1 bg-muted px-2 py-1 rounded text-sm">
-                  <span className="truncate max-w-[150px]">{file.name}</span>
-                  <button onClick={() => removeFile(i)} className="text-destructive hover:text-destructive/80">
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <label className="flex items-center gap-2 cursor-pointer text-sm text-primary hover:underline">
-              <Upload className="h-4 w-4" />
-              Adicionar arquivo
-              <input
-                type="file"
-                multiple
-                accept="image/*,video/*"
-                onChange={handleFileChange}
-                className="hidden"
+            
+            {/* List of added URLs */}
+            {proofUrls.filter(u => u.trim()).length > 0 && (
+              <div className="space-y-2 mt-2">
+                {proofUrls.filter(u => u.trim()).map((url, i) => (
+                  <div key={i} className="flex items-center gap-2 bg-muted px-3 py-2 rounded text-sm">
+                    <Link className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate flex-1">{url}</span>
+                    <button 
+                      onClick={() => removeProofUrl(i)} 
+                      className="text-destructive hover:text-destructive/80 flex-shrink-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Add new URL */}
+            <div className="flex gap-2">
+              <Input
+                placeholder="Cole a URL da imagem ou vídeo..."
+                value={newUrl}
+                onChange={(e) => setNewUrl(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addProofUrl())}
               />
-            </label>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="icon"
+                onClick={addProofUrl}
+                disabled={proofUrls.filter(u => u.trim()).length >= 5}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {proofUrls.filter(u => u.trim()).length}/5 URLs adicionadas
+            </p>
           </div>
 
           {/* PIX Key Type */}
@@ -484,13 +486,13 @@ export function RefundRequestButton({
 
           <Button 
             onClick={handleSubmit} 
-            disabled={loading || uploading}
+            disabled={loading}
             className="w-full"
           >
-            {loading || uploading ? (
+            {loading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {uploading ? "Enviando arquivos..." : "Enviando..."}
+                Enviando...
               </>
             ) : (
               "Enviar Solicitação"
