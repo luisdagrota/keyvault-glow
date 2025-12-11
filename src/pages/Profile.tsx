@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Loader2, Package, User as UserIcon, MessageSquare, CheckCircle2, Star, Camera, Save, Flag, Ticket } from "lucide-react";
+import { Loader2, Package, User as UserIcon, MessageSquare, CheckCircle2, Star, Camera, Save, Flag, Ticket, Gift, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,10 @@ import { ChatWindow } from "@/components/chat/ChatWindow";
 import { ReportSellerButton } from "@/components/ReportSellerButton";
 import { CustomerTickets } from "@/components/CustomerTickets";
 import { BuyerReputation } from "@/components/BuyerReputation";
+import { CustomerRewards } from "@/components/CustomerRewards";
+import { OrderTimeline } from "@/components/OrderTimeline";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RefundRequestButton } from "@/components/RefundRequestButton";
 import {
   Dialog,
   DialogContent,
@@ -58,6 +62,9 @@ const Profile = () => {
   const [editingAvatar, setEditingAvatar] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [savingAvatar, setSavingAvatar] = useState(false);
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get("tab") || "orders";
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -325,206 +332,281 @@ const Profile = () => {
             </CardHeader>
           </Card>
 
-          {totalUnread > 0 && (
-            <Card className="border-primary/50">
-              <CardContent className="flex items-center gap-3 p-4">
-                <MessageSquare className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="font-medium">Você tem {totalUnread} mensagem(ns) não lida(s)</p>
-                  <p className="text-sm text-muted-foreground">Clique em "Abrir Chat" para responder</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          <Tabs defaultValue={defaultTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="orders" className="gap-2">
+                <Package className="h-4 w-4" />
+                <span className="hidden sm:inline">Pedidos</span>
+              </TabsTrigger>
+              <TabsTrigger value="rewards" className="gap-2">
+                <Gift className="h-4 w-4" />
+                <span className="hidden sm:inline">Recompensas</span>
+              </TabsTrigger>
+              <TabsTrigger value="tickets" className="gap-2">
+                <Ticket className="h-4 w-4" />
+                <span className="hidden sm:inline">Suporte</span>
+              </TabsTrigger>
+            </TabsList>
 
-          {activeOrders.length > 0 && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  <CardTitle>Chats Ativos</CardTitle>
-                </div>
-                <CardDescription>
-                  Converse com nossa equipe sobre seus pedidos
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {activeOrders.map((order) => {
-                    const unreadCount = order.chat_status?.[0]?.unread_customer_count || 0;
-                    
-                    return (
-                      <div
-                        key={order.id}
-                        className="border rounded-lg p-4 hover:bg-accent/50 transition-colors"
-                      >
-                        <div className="flex justify-between items-start mb-3">
-                          <div>
-                            <h3 className="font-semibold flex items-center gap-2">
-                              <Package className="h-4 w-4" />
-                              {order.product_name}
-                            </h3>
-                            <p className="text-sm text-muted-foreground">
-                              Pedido #{order.id.slice(0, 8)}
-                            </p>
-                          </div>
-                          {getStatusBadge(order.payment_status)}
-                        </div>
-                        
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(order.created_at).toLocaleDateString("pt-BR")}
-                          </p>
-                          <div className="flex gap-2 w-full sm:w-auto">
-                            {order.seller_id && order.payment_status === 'approved' && (
-                              <ReportSellerButton
-                                orderId={order.id}
-                                sellerId={order.seller_id}
-                                sellerName={order.seller_name || "Vendedor"}
-                                productName={order.product_name}
-                              />
-                            )}
-                            <Button
-                              onClick={() => setSelectedOrder(order)}
-                              variant={unreadCount > 0 ? "default" : "outline"}
-                              size="sm"
-                              className="gap-2 flex-1 sm:flex-none"
-                            >
-                              <MessageSquare className="h-4 w-4" />
-                              Abrir Chat
-                              {unreadCount > 0 && (
-                                <Badge variant="destructive" className="ml-1">
-                                  {unreadCount}
-                                </Badge>
-                              )}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Success message for recently delivered orders */}
-          {deliveredOrders.length > 0 && (
-            <Card className="border-success/50 bg-success/5">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-success" />
-                  <CardTitle className="text-success">Pedidos Concluídos</CardTitle>
-                </div>
-                <CardDescription>
-                  ✅ Seus pedidos foram entregues com sucesso!
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {deliveredOrders.slice(0, 3).map((order) => (
-                    <div
-                      key={order.id}
-                      className="flex items-center justify-between p-3 bg-background rounded-lg border"
-                    >
-                      <div>
-                        <h4 className="font-semibold">{order.product_name}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Entregue em {new Date(order.updated_at || order.created_at).toLocaleDateString("pt-BR")}
-                        </p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => window.location.href = `/product/${order.product_id}?orderId=${order.id}`}
-                      >
-                        <Star className="h-4 w-4 mr-1" />
-                        Avaliar
-                      </Button>
+            <TabsContent value="orders" className="space-y-4 mt-4">
+              {totalUnread > 0 && (
+                <Card className="border-primary/50">
+                  <CardContent className="flex items-center gap-3 p-4">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="font-medium">Você tem {totalUnread} mensagem(ns) não lida(s)</p>
+                      <p className="text-sm text-muted-foreground">Clique em "Abrir Chat" para responder</p>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                  </CardContent>
+                </Card>
+              )}
 
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                <CardTitle>Histórico de Pedidos</CardTitle>
-              </div>
-              <CardDescription>
-                Todos os seus pedidos anteriores
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {orders.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  Você ainda não tem pedidos
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {orders.map((order) => {
-                    const isDelivered = order.payment_status === 'delivered';
-                    
-                    return (
-                      <div
-                        key={order.id}
-                        className="border rounded-lg p-4 hover:bg-accent/50 transition-colors"
-                      >
-                        <div className="flex justify-between items-start mb-2">
+              {activeOrders.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="h-5 w-5" />
+                      <CardTitle>Chats Ativos</CardTitle>
+                    </div>
+                    <CardDescription>
+                      Converse com nossa equipe sobre seus pedidos
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {activeOrders.map((order) => {
+                        const unreadCount = order.chat_status?.[0]?.unread_customer_count || 0;
+                        const isExpanded = expandedOrderId === order.id;
+                        
+                        return (
+                          <div
+                            key={order.id}
+                            className="border rounded-lg p-4 hover:bg-accent/50 transition-colors"
+                          >
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <h3 className="font-semibold flex items-center gap-2">
+                                  <Package className="h-4 w-4" />
+                                  {order.product_name}
+                                </h3>
+                                <p className="text-sm text-muted-foreground">
+                                  Pedido #{order.id.slice(0, 8)}
+                                </p>
+                              </div>
+                              {getStatusBadge(order.payment_status)}
+                            </div>
+
+                            {/* Order Timeline */}
+                            <div className="my-4">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-between"
+                                onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
+                              >
+                                <span className="text-sm">Ver status do pedido</span>
+                                {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                              </Button>
+                              {isExpanded && (
+                                <div className="mt-3 p-4 bg-muted/30 rounded-lg">
+                                  <OrderTimeline
+                                    paymentStatus={order.payment_status}
+                                    createdAt={order.created_at}
+                                    updatedAt={order.updated_at}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                              <p className="text-sm text-muted-foreground">
+                                {new Date(order.created_at).toLocaleDateString("pt-BR")}
+                              </p>
+                              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                                {order.seller_id && order.payment_status === 'approved' && (
+                                  <ReportSellerButton
+                                    orderId={order.id}
+                                    sellerId={order.seller_id}
+                                    sellerName={order.seller_name || "Vendedor"}
+                                    productName={order.product_name}
+                                  />
+                                )}
+                                <RefundRequestButton
+                                  orderId={order.id}
+                                  orderAmount={order.transaction_amount}
+                                  sellerId={order.seller_id || null}
+                                  paymentStatus={order.payment_status}
+                                  deliveredAt={order.updated_at}
+                                />
+                                <Button
+                                  onClick={() => setSelectedOrder(order)}
+                                  variant={unreadCount > 0 ? "default" : "outline"}
+                                  size="sm"
+                                  className="gap-2 flex-1 sm:flex-none"
+                                >
+                                  <MessageSquare className="h-4 w-4" />
+                                  Abrir Chat
+                                  {unreadCount > 0 && (
+                                    <Badge variant="destructive" className="ml-1">
+                                      {unreadCount}
+                                    </Badge>
+                                  )}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {deliveredOrders.length > 0 && (
+                <Card className="border-success/50 bg-success/5">
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-success" />
+                      <CardTitle className="text-success">Pedidos Concluídos</CardTitle>
+                    </div>
+                    <CardDescription>
+                      ✅ Seus pedidos foram entregues com sucesso!
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {deliveredOrders.slice(0, 3).map((order) => (
+                        <div
+                          key={order.id}
+                          className="flex items-center justify-between p-3 bg-background rounded-lg border"
+                        >
                           <div>
-                            <h3 className="font-semibold">{order.product_name}</h3>
+                            <h4 className="font-semibold">{order.product_name}</h4>
                             <p className="text-sm text-muted-foreground">
-                              {new Date(order.created_at).toLocaleDateString("pt-BR", {
-                                day: "2-digit",
-                                month: "long",
-                                year: "numeric",
-                              })}
+                              Entregue em {new Date(order.updated_at || order.created_at).toLocaleDateString("pt-BR")}
                             </p>
                           </div>
-                          <div className="flex flex-col items-end gap-2">
-                            {getStatusBadge(order.payment_status)}
-                            {isDelivered && (
-                              <div className="flex items-center gap-1 text-sm text-success">
-                                <CheckCircle2 className="h-4 w-4" />
-                                <span>Concluído</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.location.href = `/product/${order.product_id}?orderId=${order.id}`}
+                          >
+                            <Star className="h-4 w-4 mr-1" />
+                            Avaliar
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Package className="h-5 w-5" />
+                    <CardTitle>Histórico de Pedidos</CardTitle>
+                  </div>
+                  <CardDescription>
+                    Todos os seus pedidos anteriores
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {orders.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">
+                      Você ainda não tem pedidos
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {orders.map((order) => {
+                        const isDelivered = order.payment_status === 'delivered';
+                        const isExpanded = expandedOrderId === order.id;
+                        
+                        return (
+                          <div
+                            key={order.id}
+                            className="border rounded-lg p-4 hover:bg-accent/50 transition-colors"
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <h3 className="font-semibold">{order.product_name}</h3>
+                                <p className="text-sm text-muted-foreground">
+                                  {new Date(order.created_at).toLocaleDateString("pt-BR", {
+                                    day: "2-digit",
+                                    month: "long",
+                                    year: "numeric",
+                                  })}
+                                </p>
+                              </div>
+                              <div className="flex flex-col items-end gap-2">
+                                {getStatusBadge(order.payment_status)}
+                                {isDelivered && (
+                                  <div className="flex items-center gap-1 text-sm text-success">
+                                    <CheckCircle2 className="h-4 w-4" />
+                                    <span>Concluído</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Collapsible Timeline */}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="w-full justify-between my-2"
+                              onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
+                            >
+                              <span className="text-sm text-muted-foreground">Ver timeline do pedido</span>
+                              {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </Button>
+                            {isExpanded && (
+                              <div className="mb-3 p-4 bg-muted/30 rounded-lg">
+                                <OrderTimeline
+                                  paymentStatus={order.payment_status}
+                                  createdAt={order.created_at}
+                                  updatedAt={order.updated_at}
+                                />
                               </div>
                             )}
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <p className="text-sm text-muted-foreground">
-                            {order.payment_method === "pix" ? "PIX" : "Boleto"}
-                          </p>
-                          <p className="font-bold text-primary">
-                            R$ {order.transaction_amount.toFixed(2)}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
 
-          {/* Tickets de Suporte */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Ticket className="h-5 w-5" />
-                <CardTitle>Suporte</CardTitle>
-              </div>
-              <CardDescription>
-                Abra tickets para obter ajuda com seus pedidos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <CustomerTickets />
-            </CardContent>
-          </Card>
+                            <div className="flex justify-between items-center">
+                              <p className="text-sm text-muted-foreground">
+                                {order.payment_method === "pix" ? "PIX" : "Boleto"}
+                              </p>
+                              <p className="font-bold text-primary">
+                                R$ {order.transaction_amount.toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="rewards" className="mt-4">
+              {user && <CustomerRewards userId={user.id} />}
+            </TabsContent>
+
+            <TabsContent value="tickets" className="mt-4">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Ticket className="h-5 w-5" />
+                    <CardTitle>Suporte</CardTitle>
+                  </div>
+                  <CardDescription>
+                    Abra tickets para obter ajuda com seus pedidos
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <CustomerTickets />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
       <Footer />
