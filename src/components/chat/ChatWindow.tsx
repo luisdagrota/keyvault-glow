@@ -19,7 +19,7 @@ interface ChatMessage {
   id: string;
   order_id: string;
   sender_id: string;
-  sender_type: "customer" | "admin";
+  sender_type: "customer" | "admin" | "seller";
   message: string | null;
   attachment_url: string | null;
   attachment_name: string | null;
@@ -31,10 +31,11 @@ interface ChatWindowProps {
   orderNumber?: string;
   customerName?: string;
   isAdmin: boolean;
+  isSeller?: boolean;
   onMarkAsDelivered?: () => void;
 }
 
-export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMarkAsDelivered }: ChatWindowProps) {
+export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, isSeller = false, onMarkAsDelivered }: ChatWindowProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -43,7 +44,8 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const { isOtherTyping, handleTyping, stopTyping } = useTypingIndicator(orderId, isAdmin);
+  const userType = isAdmin ? 'admin' : (isSeller ? 'seller' : 'customer');
+  const { isOtherTyping, handleTyping, stopTyping } = useTypingIndicator(orderId, userType);
 
   useEffect(() => {
     loadMessages();
@@ -101,7 +103,7 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const field = isAdmin ? 'unread_admin_count' : 'unread_customer_count';
+    const field = isAdmin ? 'unread_admin_count' : (isSeller ? 'unread_seller_count' : 'unread_customer_count');
     
     await supabase
       .from('order_chat_status')
@@ -156,7 +158,7 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
       .insert({
         order_id: orderId,
         sender_id: user.id,
-        sender_type: isAdmin ? 'admin' : 'customer',
+        sender_type: userType,
         message: newMessage.trim() || null,
         attachment_url: attachmentUrl,
         attachment_name: attachmentName
@@ -344,8 +346,24 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
                   </div>
 
                   {group.messages.map((msg) => {
-                    const isOwnMessage = isAdmin ? msg.sender_type === 'admin' : msg.sender_type === 'customer';
+                    const isOwnMessage = msg.sender_type === userType;
                     const isImage = isImageFile(msg.attachment_name);
+                    
+                    const getSenderLabel = (type: string) => {
+                      switch (type) {
+                        case 'admin': return 'ADM';
+                        case 'seller': return 'Vendedor';
+                        default: return 'Cliente';
+                      }
+                    };
+                    
+                    const getSenderVariant = (type: string) => {
+                      switch (type) {
+                        case 'admin': return 'default';
+                        case 'seller': return 'outline';
+                        default: return 'secondary';
+                      }
+                    };
                     
                     return (
                       <div
@@ -353,8 +371,8 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
                         className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
                       >
                         <div className={`max-w-[85%] sm:max-w-[70%] ${isOwnMessage ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
-                          <Badge variant={msg.sender_type === 'admin' ? 'default' : 'secondary'} className="text-xs">
-                            {msg.sender_type === 'admin' ? 'ADM' : 'Cliente'}
+                          <Badge variant={getSenderVariant(msg.sender_type) as any} className="text-xs">
+                            {getSenderLabel(msg.sender_type)}
                           </Badge>
                           
                           <div
@@ -412,7 +430,7 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, onMark
               {/* Typing indicator */}
               <TypingIndicator 
                 isTyping={isOtherTyping} 
-                label={isAdmin ? "Cliente digitando" : "ADM digitando"} 
+                label={isOtherTyping ? "Digitando..." : ""} 
               />
             </div>
           </ScrollArea>

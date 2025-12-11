@@ -288,6 +288,7 @@ export type Database = {
           order_id: string
           unread_admin_count: number
           unread_customer_count: number
+          unread_seller_count: number
         }
         Insert: {
           created_at?: string
@@ -297,6 +298,7 @@ export type Database = {
           order_id: string
           unread_admin_count?: number
           unread_customer_count?: number
+          unread_seller_count?: number
         }
         Update: {
           created_at?: string
@@ -306,6 +308,7 @@ export type Database = {
           order_id?: string
           unread_admin_count?: number
           unread_customer_count?: number
+          unread_seller_count?: number
         }
         Relationships: [
           {
