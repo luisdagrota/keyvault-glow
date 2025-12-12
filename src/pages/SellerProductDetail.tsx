@@ -66,8 +66,13 @@ export default function SellerProductDetail() {
             average_rating,
             total_sales
           )
-        `)
-        .eq("is_active", true);
+        `);
+
+      // If user is coming to review (has orderId), don't filter by is_active
+      // Otherwise only show active products
+      if (!orderId) {
+        query = query.eq("is_active", true);
+      }
 
       // Search by slug or id
       if (isSlugRoute && slug) {
@@ -76,7 +81,7 @@ export default function SellerProductDetail() {
         query = query.eq("id", id);
       }
 
-      const { data, error } = await query.single();
+      const { data, error } = await query.maybeSingle();
 
       if (error) throw error;
       setProduct(data);
