@@ -382,4 +382,31 @@ All colors MUST be HSL.
     background-size: 200% 100%;
     animation: shimmer 3s infinite;
   }
+
+  /* Scroll Progress Bar */
+  .scroll-progress-container {
+    @apply absolute bottom-0 left-0 right-0 h-[3px] bg-border/30 overflow-hidden;
+  }
+
+  .scroll-progress-bar {
+    @apply h-full origin-left;
+    background: var(--gradient-hero);
+    transform: scaleX(0);
+    animation: scroll-progress linear;
+    animation-timeline: scroll(root);
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.5);
+  }
+
+  @keyframes scroll-progress {
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  /* Fallback for browsers that don't support scroll-timeline */
+  @supports not (animation-timeline: scroll()) {
+    .scroll-progress-bar {
+      animation: none;
+    }
+  }
 }
