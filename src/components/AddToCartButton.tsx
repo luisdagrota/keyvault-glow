@@ -16,7 +16,7 @@ export function AddToCartButton({
   showText = true,
   className = ""
 }: AddToCartButtonProps) {
-  const { addItem, items, setIsOpen } = useCart();
+  const { addItem, items } = useCart();
   const [justAdded, setJustAdded] = useState(false);
   
   const itemInCart = items.find((item) => item.id === product.id);

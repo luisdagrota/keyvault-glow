@@ -1,20 +1,26 @@
 import { ShoppingCart } from "lucide-react";
 import { Button } from "./ui/button";
 import { useCart } from "@/contexts/CartContext";
+import { useNavigate } from "react-router-dom";
 
 interface CartButtonProps {
   variant?: "default" | "icon" | "mobile";
 }
 
 export function CartButton({ variant = "icon" }: CartButtonProps) {
-  const { totalItems, setIsOpen } = useCart();
+  const { totalItems } = useCart();
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate("/cart");
+  };
 
   if (variant === "mobile") {
     return (
       <Button
         variant="ghost"
         className="w-full justify-start h-12 text-base relative"
-        onClick={() => setIsOpen(true)}
+        onClick={handleClick}
       >
         <ShoppingCart className="h-5 w-5 mr-3" />
         Carrinho
@@ -32,7 +38,7 @@ export function CartButton({ variant = "icon" }: CartButtonProps) {
       variant="ghost"
       size="icon"
       className="relative h-9 w-9"
-      onClick={() => setIsOpen(true)}
+      onClick={handleClick}
     >
       <ShoppingCart className="h-5 w-5" />
       {totalItems > 0 && (
