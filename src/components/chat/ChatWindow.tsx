@@ -317,7 +317,7 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, isSell
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">Cliente: {customerName}</p>
               )}
             </div>
-            {isAdmin && onMarkAsDelivered && (
+            {(isAdmin || isSeller) && onMarkAsDelivered && (
               <Button onClick={onMarkAsDelivered} variant="default" size="sm" className="w-full sm:w-auto mt-2 sm:mt-0 h-9">
                 Marcar como Entregue
               </Button>
