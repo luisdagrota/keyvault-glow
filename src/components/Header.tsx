@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { CartButton } from "./CartButton";
 import { ThemeToggle } from "./ThemeToggle";
 import { UserNotifications } from "./UserNotifications";
+import { useScrollProgress } from "@/hooks/useScrollProgress";
 import {
   Sheet,
   SheetContent,
@@ -216,8 +217,17 @@ export function Header() {
     navigate(path);
   };
 
+  const { progress, needsFallback } = useScrollProgress();
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      {/* Scroll Progress Bar */}
+      <div className="scroll-progress-container">
+        <div 
+          className="scroll-progress-bar" 
+          style={needsFallback ? { transform: `scaleX(${progress})` } : undefined}
+        />
+      </div>
       <div className="container flex h-14 sm:h-16 items-center justify-between px-4">
         <div className="flex items-center gap-4 sm:gap-6">
           <Link to="/" className="flex items-center space-x-2">
