@@ -171,7 +171,7 @@ export default function Cart() {
                 </div>
 
                 <Button 
-                  className="w-full h-12 text-base mt-6"
+                  className="w-full h-12 text-base mt-6 btn-shimmer animate-glow-pulse"
                   onClick={handleCheckout}
                 >
                   Finalizar Compra
