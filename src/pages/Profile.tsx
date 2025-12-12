@@ -489,7 +489,13 @@ const Profile = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => window.location.href = `/product/${order.product_id}?orderId=${order.id}`}
+                            onClick={() => {
+                              // Se tem seller_id, é produto de vendedor
+                              const url = order.seller_id 
+                                ? `/seller-product/${order.product_id}?orderId=${order.id}`
+                                : `/product/${order.product_id}?orderId=${order.id}`;
+                              window.location.href = url;
+                            }}
                           >
                             <Star className="h-4 w-4 mr-1" />
                             Avaliar
