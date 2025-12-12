@@ -80,13 +80,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "buyer_reviews_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "buyer_reviews_seller_id_fkey"
             columns: ["seller_id"]
             isOneToOne: false
