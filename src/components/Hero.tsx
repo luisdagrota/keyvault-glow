@@ -27,7 +27,7 @@ export function Hero() {
 
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2 sm:pt-4 w-full sm:w-auto px-4 sm:px-0">
             <Link to="/products" className="w-full sm:w-auto">
-              <Button size="lg" variant="hero" className="group w-full sm:w-auto h-12 sm:h-14 text-base">
+              <Button size="lg" variant="hero" className="group w-full sm:w-auto h-12 sm:h-14 text-base btn-shimmer animate-glow-pulse">
                 Ver Ofertas
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
