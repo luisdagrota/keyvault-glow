@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Star, MessageSquare } from "lucide-react";
+import { Star, MessageSquare, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -9,6 +9,8 @@ interface Review {
   rating: number;
   comment: string | null;
   created_at: string;
+  is_approved: boolean;
+  user_id: string;
 }
 
 interface ProductReviewsProps {
@@ -17,23 +19,46 @@ interface ProductReviewsProps {
 
 export function ProductReviews({ productId }: ProductReviewsProps) {
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [pendingUserReview, setPendingUserReview] = useState<Review | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     loadReviews();
   }, [productId]);
 
   const loadReviews = async () => {
-    const { data, error } = await supabase
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    setCurrentUserId(user?.id || null);
+
+    // Load approved reviews
+    const { data: approvedData, error: approvedError } = await supabase
       .from("product_reviews")
-      .select("id, rating, comment, created_at")
+      .select("id, rating, comment, created_at, is_approved, user_id")
       .eq("product_id", productId)
       .eq("is_approved", true)
       .order("created_at", { ascending: false });
 
-    if (!error) {
-      setReviews(data || []);
+    if (!approvedError) {
+      setReviews(approvedData || []);
     }
+
+    // If user is logged in, check for their pending review
+    if (user) {
+      const { data: pendingData } = await supabase
+        .from("product_reviews")
+        .select("id, rating, comment, created_at, is_approved, user_id")
+        .eq("product_id", productId)
+        .eq("user_id", user.id)
+        .eq("is_approved", false)
+        .maybeSingle();
+
+      if (pendingData) {
+        setPendingUserReview(pendingData);
+      }
+    }
+
     setLoading(false);
   };
 
@@ -85,7 +110,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {reviews.length === 0 ? (
+        {reviews.length === 0 && !pendingUserReview ? (
           <div className="text-center py-8 text-muted-foreground">
             <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>Este produto ainda não possui avaliações</p>
@@ -112,21 +137,46 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
               </div>
             </div>
 
-            {/* Lista de avaliações */}
-            <div className="space-y-4 pt-4 border-t border-border">
-              {reviews.map((review) => (
-                <div key={review.id} className="p-4 bg-muted/30 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    {renderStars(review.rating)}
-                    <span className="text-sm text-muted-foreground">
-                      {new Date(review.created_at).toLocaleDateString("pt-BR")}
-                    </span>
-                  </div>
-                  {review.comment && (
-                    <p className="text-sm text-foreground">{review.comment}</p>
-                  )}
+            {/* Avaliação pendente do usuário */}
+            {pendingUserReview && (
+              <div className="mb-4 p-4 bg-warning/10 border border-warning/30 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="h-4 w-4 text-warning" />
+                  <span className="text-sm font-medium text-warning">Sua avaliação (aguardando aprovação)</span>
                 </div>
-              ))}
+                <div className="flex items-center justify-between mb-2">
+                  {renderStars(pendingUserReview.rating)}
+                  <span className="text-sm text-muted-foreground">
+                    {new Date(pendingUserReview.created_at).toLocaleDateString("pt-BR")}
+                  </span>
+                </div>
+                {pendingUserReview.comment && (
+                  <p className="text-sm text-foreground">{pendingUserReview.comment}</p>
+                )}
+              </div>
+            )}
+
+            {/* Lista de avaliações aprovadas */}
+            <div className="space-y-4 pt-4 border-t border-border">
+              {reviews.length === 0 && pendingUserReview ? (
+                <p className="text-center text-sm text-muted-foreground py-4">
+                  Nenhuma outra avaliação ainda
+                </p>
+              ) : (
+                reviews.map((review) => (
+                  <div key={review.id} className="p-4 bg-muted/30 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      {renderStars(review.rating)}
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(review.created_at).toLocaleDateString("pt-BR")}
+                      </span>
+                    </div>
+                    {review.comment && (
+                      <p className="text-sm text-foreground">{review.comment}</p>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
