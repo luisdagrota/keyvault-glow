@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { CheckCircle, Mail, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSound } from "@/contexts/SoundContext";
 
 const DISCORD_URL = "https://discord.gg/3B348wmnQ4";
 
@@ -23,6 +24,20 @@ export default function PedidoConcluido() {
   const orderId = searchParams.get("id");
   const [order, setOrder] = useState<OrderData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { soundEnabled } = useSound();
+  const hasPlayedSound = useRef(false);
+
+  // Play success sound when order is loaded and approved
+  useEffect(() => {
+    if (order && order.payment_status === "approved" && !hasPlayedSound.current && soundEnabled) {
+      hasPlayedSound.current = true;
+      const audio = new Audio("/sounds/purchase-success.mp3");
+      audio.volume = 0.3;
+      audio.play().catch(() => {
+        // Ignore autoplay errors
+      });
+    }
+  }, [order, soundEnabled]);
 
   useEffect(() => {
     const loadOrder = async () => {
