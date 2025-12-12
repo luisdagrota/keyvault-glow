@@ -24,12 +24,14 @@ import Cart from "./pages/Cart";
 import { DiscordButton } from "./components/DiscordButton";
 import { CartProvider } from "./contexts/CartContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { SoundProvider, useSound } from "./contexts/SoundContext";
 import { useButtonClickSound } from "./hooks/useButtonClickSound";
 
 const queryClient = new QueryClient();
 
 function AppContent() {
-  useButtonClickSound();
+  const { soundEnabled } = useSound();
+  useButtonClickSound(soundEnabled);
   
   return (
     <>
@@ -67,11 +69,13 @@ function AppContent() {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <CartProvider>
-        <TooltipProvider>
-          <AppContent />
-        </TooltipProvider>
-      </CartProvider>
+      <SoundProvider>
+        <CartProvider>
+          <TooltipProvider>
+            <AppContent />
+          </TooltipProvider>
+        </CartProvider>
+      </SoundProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );
