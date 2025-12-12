@@ -14,6 +14,17 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ChatMessage {
   id: string;
@@ -318,9 +329,27 @@ export function ChatWindow({ orderId, orderNumber, customerName, isAdmin, isSell
               )}
             </div>
             {(isAdmin || isSeller) && onMarkAsDelivered && (
-              <Button onClick={onMarkAsDelivered} variant="default" size="sm" className="w-full sm:w-auto mt-2 sm:mt-0 h-9">
-                Marcar como Entregue
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="default" size="sm" className="w-full sm:w-auto mt-2 sm:mt-0 h-9">
+                    Marcar como Entregue
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirmar entrega</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Tem certeza que deseja marcar este pedido como entregue? Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={onMarkAsDelivered}>
+                      Confirmar Entrega
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
         </CardHeader>
