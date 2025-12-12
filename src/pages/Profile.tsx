@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Loader2, Package, User as UserIcon, MessageSquare, CheckCircle2, Star, Camera, Save, Flag, Ticket, Gift, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, Package, User as UserIcon, MessageSquare, CheckCircle2, Star, Camera, Save, Flag, Ticket, Gift, ChevronDown, ChevronUp, Settings } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ import { CustomerRewards } from "@/components/CustomerRewards";
 import { OrderTimeline } from "@/components/OrderTimeline";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RefundRequestButton } from "@/components/RefundRequestButton";
+import { SoundToggle } from "@/components/SoundToggle";
 import {
   Dialog,
   DialogContent,
@@ -333,7 +334,7 @@ const Profile = () => {
           </Card>
 
           <Tabs defaultValue={defaultTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="orders" className="gap-2">
                 <Package className="h-4 w-4" />
                 <span className="hidden sm:inline">Pedidos</span>
@@ -345,6 +346,10 @@ const Profile = () => {
               <TabsTrigger value="tickets" className="gap-2">
                 <Ticket className="h-4 w-4" />
                 <span className="hidden sm:inline">Suporte</span>
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="gap-2">
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Config</span>
               </TabsTrigger>
             </TabsList>
 
@@ -609,6 +614,23 @@ const Profile = () => {
                 </CardHeader>
                 <CardContent>
                   <CustomerTickets />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="settings" className="space-y-4 mt-4">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    <CardTitle>Configurações</CardTitle>
+                  </div>
+                  <CardDescription>
+                    Personalize sua experiência no site
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <SoundToggle />
                 </CardContent>
               </Card>
             </TabsContent>

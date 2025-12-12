@@ -10,6 +10,7 @@ import { NotificationBadge } from "./NotificationBadge";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { CartButton } from "./CartButton";
 import { ThemeToggle } from "./ThemeToggle";
+import { SoundToggle } from "./SoundToggle";
 import { UserNotifications } from "./UserNotifications";
 import { useScrollProgress } from "@/hooks/useScrollProgress";
 import {
@@ -273,6 +274,9 @@ export function Header() {
 
           {/* User Notifications */}
           {user && <UserNotifications />}
+
+          {/* Sound Toggle */}
+          <SoundToggle variant="compact" />
 
           {/* Theme Toggle */}
           <ThemeToggle />

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-export function useButtonClickSound() {
+export function useButtonClickSound(enabled: boolean = true) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -9,7 +9,7 @@ export function useButtonClickSound() {
     audioRef.current.volume = 0.3; // 30% volume
 
     const playSound = () => {
-      if (audioRef.current) {
+      if (audioRef.current && enabled) {
         audioRef.current.currentTime = 0;
         audioRef.current.play().catch(() => {
           // Ignore autoplay errors
@@ -18,6 +18,8 @@ export function useButtonClickSound() {
     };
 
     const handleClick = (event: MouseEvent) => {
+      if (!enabled) return;
+      
       const target = event.target as HTMLElement;
       
       // Check if clicked element or any parent is a clickable element
@@ -35,5 +37,5 @@ export function useButtonClickSound() {
     return () => {
       document.removeEventListener("click", handleClick);
     };
-  }, []);
+  }, [enabled]);
 }
