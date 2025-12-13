@@ -13,6 +13,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { SoundToggle } from "./SoundToggle";
 import { UserNotifications } from "./UserNotifications";
 import { useScrollProgress } from "@/hooks/useScrollProgress";
+import { CategoryMenu, CategoryMenuMobile } from "./CategoryMenu";
 import {
   Sheet,
   SheetContent,
@@ -240,10 +241,11 @@ export function Header() {
             <span className="text-lg sm:text-xl font-bold gradient-text">GameKeys</span>
           </Link>
           
-          <nav className="hidden md:flex items-center gap-6 text-sm">
+          <nav className="hidden md:flex items-center gap-4 text-sm">
             <Link to="/" className="text-foreground/80 hover:text-foreground transition-colors">
               Início
             </Link>
+            <CategoryMenu />
             <Link to="/products" className="text-foreground/80 hover:text-foreground transition-colors">
               Produtos
             </Link>
@@ -358,6 +360,9 @@ export function Header() {
                   <Info className="h-5 w-5 mr-3" />
                   Sobre
                 </Button>
+
+                {/* Mobile Categories */}
+                <CategoryMenuMobile onClose={() => setMobileMenuOpen(false)} />
 
                 <div className="h-px bg-border my-2" />
 
