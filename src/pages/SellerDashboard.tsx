@@ -12,6 +12,7 @@ import { SellerWarnings } from "@/components/seller/SellerWarnings";
 import { SellerRefunds } from "@/components/seller/SellerRefunds";
 import { SellerCoupons } from "@/components/seller/SellerCoupons";
 import { SellerChats } from "@/components/seller/SellerChats";
+import { SellerChallenges } from "@/components/seller/SellerChallenges";
 import { useTrackSellerPresence } from "@/hooks/useSellerPresence";
 
 export interface SellerProfile {
@@ -99,6 +100,7 @@ const SellerDashboard = () => {
             if (data) setSellerProfile(data);
           });
         }} />}
+        {activeTab === "challenges" && <SellerChallenges sellerId={sellerProfile.id} />}
         {activeTab === "products" && <SellerProducts sellerId={sellerProfile.id} />}
         {activeTab === "coupons" && <SellerCoupons sellerId={sellerProfile.id} />}
         {activeTab === "chats" && <SellerChats sellerId={sellerProfile.id} />}

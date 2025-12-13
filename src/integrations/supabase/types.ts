@@ -761,6 +761,105 @@ export type Database = {
           },
         ]
       }
+      seller_challenge_progress: {
+        Row: {
+          challenge_id: string
+          completed_at: string | null
+          created_at: string
+          current_value: number
+          id: string
+          is_completed: boolean
+          reward_claimed: boolean
+          reward_claimed_at: string | null
+          seller_id: string
+          updated_at: string
+        }
+        Insert: {
+          challenge_id: string
+          completed_at?: string | null
+          created_at?: string
+          current_value?: number
+          id?: string
+          is_completed?: boolean
+          reward_claimed?: boolean
+          reward_claimed_at?: string | null
+          seller_id: string
+          updated_at?: string
+        }
+        Update: {
+          challenge_id?: string
+          completed_at?: string | null
+          created_at?: string
+          current_value?: number
+          id?: string
+          is_completed?: boolean
+          reward_claimed?: boolean
+          reward_claimed_at?: string | null
+          seller_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_challenge_progress_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "seller_challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_challenge_progress_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_challenges: {
+        Row: {
+          challenge_type: string
+          created_at: string
+          description: string
+          end_date: string
+          id: string
+          is_active: boolean
+          reward_fee_reduction: number | null
+          reward_type: string
+          reward_value: string | null
+          start_date: string
+          target_value: number
+          title: string
+        }
+        Insert: {
+          challenge_type?: string
+          created_at?: string
+          description: string
+          end_date?: string
+          id?: string
+          is_active?: boolean
+          reward_fee_reduction?: number | null
+          reward_type?: string
+          reward_value?: string | null
+          start_date?: string
+          target_value: number
+          title: string
+        }
+        Update: {
+          challenge_type?: string
+          created_at?: string
+          description?: string
+          end_date?: string
+          id?: string
+          is_active?: boolean
+          reward_fee_reduction?: number | null
+          reward_type?: string
+          reward_value?: string | null
+          start_date?: string
+          target_value?: number
+          title?: string
+        }
+        Relationships: []
+      }
       seller_coupon_products: {
         Row: {
           coupon_id: string
@@ -1167,6 +1266,60 @@ export type Database = {
           },
           {
             foreignKeyName: "seller_reports_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_rewards: {
+        Row: {
+          challenge_id: string
+          created_at: string
+          fee_reduction_expires_at: string | null
+          fee_reduction_percentage: number | null
+          homepage_highlight_expires_at: string | null
+          id: string
+          is_active: boolean
+          reward_type: string
+          reward_value: string | null
+          seller_id: string
+        }
+        Insert: {
+          challenge_id: string
+          created_at?: string
+          fee_reduction_expires_at?: string | null
+          fee_reduction_percentage?: number | null
+          homepage_highlight_expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          reward_type: string
+          reward_value?: string | null
+          seller_id: string
+        }
+        Update: {
+          challenge_id?: string
+          created_at?: string
+          fee_reduction_expires_at?: string | null
+          fee_reduction_percentage?: number | null
+          homepage_highlight_expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          reward_type?: string
+          reward_value?: string | null
+          seller_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_rewards_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "seller_challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_rewards_seller_id_fkey"
             columns: ["seller_id"]
             isOneToOne: false
             referencedRelation: "seller_profiles"
