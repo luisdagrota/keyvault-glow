@@ -13,6 +13,7 @@ import { SellerRefunds } from "@/components/seller/SellerRefunds";
 import { SellerCoupons } from "@/components/seller/SellerCoupons";
 import { SellerChats } from "@/components/seller/SellerChats";
 import { SellerChallenges } from "@/components/seller/SellerChallenges";
+import { SellerRanking } from "@/components/seller/SellerRanking";
 import { useTrackSellerPresence } from "@/hooks/useSellerPresence";
 
 export interface SellerProfile {
@@ -101,6 +102,7 @@ const SellerDashboard = () => {
           });
         }} />}
         {activeTab === "challenges" && <SellerChallenges sellerId={sellerProfile.id} />}
+        {activeTab === "ranking" && <SellerRanking sellerId={sellerProfile.id} />}
         {activeTab === "products" && <SellerProducts sellerId={sellerProfile.id} />}
         {activeTab === "coupons" && <SellerCoupons sellerId={sellerProfile.id} />}
         {activeTab === "chats" && <SellerChats sellerId={sellerProfile.id} />}
