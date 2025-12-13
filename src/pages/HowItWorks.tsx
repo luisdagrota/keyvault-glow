@@ -116,7 +116,7 @@ export default function HowItWorks() {
             
             <div className="flex items-start gap-3">
               <span className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm flex-shrink-0">7</span>
-              <p>O vendedor concorda com a taxa padrão de <strong>6,99%</strong> aplicada automaticamente sobre cada venda.</p>
+              <p>O vendedor concorda com a taxa padrão de <strong>9,99%</strong> aplicada automaticamente sobre cada venda.</p>
             </div>
             
             <div className="flex items-start gap-3">
@@ -170,7 +170,7 @@ export default function HowItWorks() {
           </div>
           <div>
             <h4 className="font-semibold text-foreground mb-1">Qual é a taxa cobrada dos vendedores?</h4>
-            <p>A plataforma cobra uma taxa de 6,99% sobre cada venda realizada.</p>
+            <p>A plataforma cobra uma taxa de 9,99% sobre cada venda realizada.</p>
           </div>
         </div>
       ),

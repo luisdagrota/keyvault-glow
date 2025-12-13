@@ -116,7 +116,7 @@ const BecomeSeller = () => {
     }
     
     if (!agreedToTerms) {
-      toast({ title: "Termos obrigatórios", description: "Você precisa aceitar a taxa de 6,99%", variant: "destructive" });
+      toast({ title: "Termos obrigatórios", description: "Você precisa aceitar a taxa de 9,99%", variant: "destructive" });
       return;
     }
     
@@ -298,7 +298,7 @@ const BecomeSeller = () => {
                   />
                   <div className="space-y-1">
                     <Label htmlFor="terms" className="cursor-pointer">
-                      Aceito a taxa de 6,99% sobre cada venda
+                      Aceito a taxa de 9,99% sobre cada venda
                     </Label>
                     <p className="text-sm text-muted-foreground">
                       Esta taxa cobre os custos de processamento de pagamento e manutenção da plataforma.
