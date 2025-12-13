@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Package, TrendingUp } from "lucide-react";
+import { Package, TrendingUp } from "lucide-react";
 import { LikeButton } from "./LikeButton";
 
 interface LikedProduct {
@@ -74,51 +73,61 @@ export function MostLikedProducts() {
           </div>
         </div>
 
-        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-6 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3">
           {products.map((product, index) => (
-            <Card
+            <div
               key={product.id}
-              className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group relative"
+              className="group bg-card rounded-lg overflow-hidden border border-border/50 shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1 cursor-pointer relative"
               onClick={() => navigate(`/seller-product/${product.id}`)}
             >
               {index < 3 && (
                 <Badge
-                  className="absolute top-2 left-2 z-10 text-xs"
+                  className="absolute top-2 left-2 z-10 text-[10px] sm:text-xs px-1.5 py-0.5"
                   variant={index === 0 ? "default" : "secondary"}
                 >
                   #{index + 1} Mais Curtido
                 </Badge>
               )}
               
-              <div className="aspect-video bg-muted relative overflow-hidden">
+              <div className="relative aspect-[16/10] overflow-hidden bg-muted">
                 {product.image_url ? (
                   <img
                     src={product.image_url}
                     alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <Package className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground/50" />
+                    <Package className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground/30" />
                   </div>
                 )}
                 
                 {product.stock === 0 && (
-                  <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                    <Badge variant="destructive">Esgotado</Badge>
+                  <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                    <Badge variant="destructive" className="text-xs sm:text-sm px-2 py-1 sm:px-3 sm:py-1.5">
+                      ESGOTADO
+                    </Badge>
                   </div>
+                )}
+
+                {product.stock > 0 && product.stock < 5 && (
+                  <Badge className="absolute top-2 right-2 bg-warning text-warning-foreground font-medium text-[10px] sm:text-xs px-1.5 py-0.5">
+                    Últimas {product.stock}!
+                  </Badge>
                 )}
               </div>
 
-              <CardContent className="p-3 sm:p-4">
-                <h3 className="font-semibold text-sm sm:text-base truncate">{product.name}</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">
+              <div className="p-3 sm:p-4">
+                <h3 className="font-semibold text-sm sm:text-base line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem] group-hover:text-primary transition-colors leading-tight">
+                  {product.name}
+                </h3>
+                <p className="mt-1 text-[10px] sm:text-xs text-muted-foreground truncate">
                   por {product.seller_name}
                 </p>
                 
-                <div className="flex items-center justify-between mt-2 sm:mt-3">
-                  <span className="text-base sm:text-lg font-bold text-primary">
+                <div className="mt-3 flex items-center justify-between">
+                  <span className="text-lg sm:text-xl font-bold text-primary">
                     R$ {product.price.toFixed(2)}
                   </span>
                   <LikeButton
@@ -127,8 +136,15 @@ export function MostLikedProducts() {
                     size="sm"
                   />
                 </div>
-              </CardContent>
-            </Card>
+
+                {product.stock > 0 && (
+                  <div className="mt-2 flex items-center gap-1.5 text-[10px] sm:text-xs text-success">
+                    <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+                    <span>Em estoque</span>
+                  </div>
+                )}
+              </div>
+            </div>
           ))}
         </div>
       </div>
