@@ -130,7 +130,7 @@ serve(async (req) => {
         console.log('🏪 Creating seller sale record for seller:', order.seller_id);
         
         const saleAmount = order.transaction_amount;
-        const feePercentage = 6.99;
+        const feePercentage = 9.99;
         const feeAmount = saleAmount * (feePercentage / 100);
         const netAmount = saleAmount - feeAmount;
 

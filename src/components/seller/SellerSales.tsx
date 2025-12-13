@@ -207,7 +207,7 @@ export const SellerSales = ({ sellerId }: SellerSalesProps) => {
         </CardHeader>
         <CardContent className="p-4 sm:p-6 pt-0 text-xs sm:text-sm text-muted-foreground space-y-1.5 sm:space-y-2">
           <p>
-            • Uma taxa de <strong>6,99%</strong> é descontada automaticamente de cada venda.
+            • Uma taxa de <strong>9,99%</strong> é descontada automaticamente de cada venda.
           </p>
           <p>
             • O valor líquido (após a taxa) entra como <strong>Saldo a Liberar</strong>.
