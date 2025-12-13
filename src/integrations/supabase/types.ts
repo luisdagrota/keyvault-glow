@@ -1152,6 +1152,7 @@ export type Database = {
           full_name: string
           id: string
           is_approved: boolean
+          is_on_vacation: boolean
           is_suspended: boolean
           last_profile_change: string | null
           last_refund_reset: string | null
@@ -1163,6 +1164,9 @@ export type Database = {
           total_sales: number
           updated_at: string
           user_id: string
+          vacation_ends_at: string | null
+          vacation_message: string | null
+          vacation_started_at: string | null
           warning_count: number
         }
         Insert: {
@@ -1178,6 +1182,7 @@ export type Database = {
           full_name: string
           id?: string
           is_approved?: boolean
+          is_on_vacation?: boolean
           is_suspended?: boolean
           last_profile_change?: string | null
           last_refund_reset?: string | null
@@ -1189,6 +1194,9 @@ export type Database = {
           total_sales?: number
           updated_at?: string
           user_id: string
+          vacation_ends_at?: string | null
+          vacation_message?: string | null
+          vacation_started_at?: string | null
           warning_count?: number
         }
         Update: {
@@ -1204,6 +1212,7 @@ export type Database = {
           full_name?: string
           id?: string
           is_approved?: boolean
+          is_on_vacation?: boolean
           is_suspended?: boolean
           last_profile_change?: string | null
           last_refund_reset?: string | null
@@ -1215,6 +1224,9 @@ export type Database = {
           total_sales?: number
           updated_at?: string
           user_id?: string
+          vacation_ends_at?: string | null
+          vacation_message?: string | null
+          vacation_started_at?: string | null
           warning_count?: number
         }
         Relationships: []

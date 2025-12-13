@@ -14,6 +14,7 @@ import { SellerCoupons } from "@/components/seller/SellerCoupons";
 import { SellerChats } from "@/components/seller/SellerChats";
 import { SellerChallenges } from "@/components/seller/SellerChallenges";
 import { SellerRanking } from "@/components/seller/SellerRanking";
+import { SellerVacationMode } from "@/components/seller/SellerVacationMode";
 import { useTrackSellerPresence } from "@/hooks/useSellerPresence";
 
 export interface SellerProfile {
@@ -108,6 +109,11 @@ const SellerDashboard = () => {
         {activeTab === "chats" && <SellerChats sellerId={sellerProfile.id} />}
         {activeTab === "sales" && <SellerSales sellerId={sellerProfile.id} />}
         {activeTab === "balance" && <SellerBalance seller={sellerProfile} />}
+        {activeTab === "vacation" && <SellerVacationMode seller={sellerProfile} onUpdate={() => {
+          supabase.from("seller_profiles").select("*").eq("id", sellerProfile.id).single().then(({ data }) => {
+            if (data) setSellerProfile(data);
+          });
+        }} />}
         {activeTab === "warnings" && <SellerWarnings seller={sellerProfile} />}
         {activeTab === "notifications" && <SellerNotifications sellerId={sellerProfile.id} />}
         {activeTab === "refunds" && <SellerRefunds sellerId={sellerProfile.id} />}

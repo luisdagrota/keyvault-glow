@@ -17,7 +17,8 @@ import {
   Tag,
   MessageSquare,
   Trophy,
-  BarChart3
+  BarChart3,
+  Palmtree
 } from "lucide-react";
 import {
   Sheet,
@@ -100,6 +101,7 @@ export const SellerSidebar = ({ activeTab, setActiveTab, sellerId }: SellerSideb
     { id: "chats", label: "Chats", icon: MessageSquare, badge: unreadChats },
     { id: "sales", label: "Minhas Vendas", icon: ShoppingCart },
     { id: "balance", label: "Saldo", icon: Wallet },
+    { id: "vacation", label: "Modo Férias", icon: Palmtree },
     { id: "refunds", label: "Reembolsos", icon: RefreshCcw },
     { id: "warnings", label: "Advertências", icon: AlertTriangle },
     { id: "notifications", label: "Notificações", icon: Bell, badge: unreadNotifications },
