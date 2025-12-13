@@ -6,7 +6,7 @@ import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Star, Calendar, Heart, Package, Users, ImageIcon } from "lucide-react";
+import { Loader2, Star, Calendar, Heart, Package, Users, ImageIcon, Palmtree } from "lucide-react";
 import { LikeButton } from "@/components/LikeButton";
 import { SellerBadges, calculateSellerBadges, SELLER_BADGES } from "@/components/seller/SellerBadges";
 import { SellerLevelBadge, calculateSellerLevel, getNextLevel, calculateXP } from "@/components/seller/SellerLevel";
@@ -24,6 +24,9 @@ interface SellerData {
   avatar_url: string | null;
   banner_url: string | null;
   bio: string | null;
+  is_on_vacation: boolean;
+  vacation_message: string | null;
+  vacation_ends_at: string | null;
 }
 
 interface SellerProduct {
@@ -54,7 +57,7 @@ const SellerProfile = () => {
       // Fetch seller profile with new fields
       const { data: sellerData, error: sellerError } = await supabase
         .from("seller_profiles")
-        .select("id, full_name, total_sales, average_rating, created_at, user_id, banner_url, bio")
+        .select("id, full_name, total_sales, average_rating, created_at, user_id, banner_url, bio, is_on_vacation, vacation_message, vacation_ends_at")
         .eq("id", id)
         .eq("is_approved", true)
         .eq("is_suspended", false)
@@ -76,6 +79,9 @@ const SellerProfile = () => {
       setSeller({
         ...sellerData,
         avatar_url: profile?.avatar_url || null,
+        is_on_vacation: sellerData.is_on_vacation || false,
+        vacation_message: sellerData.vacation_message || null,
+        vacation_ends_at: sellerData.vacation_ends_at || null,
       });
 
       // Fetch follower count
@@ -226,10 +232,32 @@ const SellerProfile = () => {
 
                   {/* Info Section */}
                   <div className="flex-1 min-w-0 pt-2 sm:pt-4">
-                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 break-words flex items-center gap-2 justify-center sm:justify-start">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 break-words flex items-center gap-2 justify-center sm:justify-start flex-wrap">
                       {seller.full_name}
-                      <OnlineIndicator isOnline={isOnline} size="lg" showLabel />
+                      {seller.is_on_vacation ? (
+                        <Badge variant="secondary" className="bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30 flex items-center gap-1">
+                          <Palmtree className="h-3 w-3" />
+                          Em Férias
+                        </Badge>
+                      ) : (
+                        <OnlineIndicator isOnline={isOnline} size="lg" showLabel />
+                      )}
                     </h1>
+                    
+                    {/* Vacation Message */}
+                    {seller.is_on_vacation && seller.vacation_message && (
+                      <div className="mb-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-sm text-amber-700 dark:text-amber-300">
+                        <p className="flex items-center gap-2">
+                          <Palmtree className="h-4 w-4 flex-shrink-0" />
+                          {seller.vacation_message}
+                        </p>
+                        {seller.vacation_ends_at && (
+                          <p className="text-xs mt-1 text-muted-foreground">
+                            Retorno previsto: {new Date(seller.vacation_ends_at).toLocaleDateString('pt-BR')}
+                          </p>
+                        )}
+                      </div>
+                    )}
                     
                     {/* Seller Level */}
                     <div className="mb-3 flex justify-center sm:justify-start">

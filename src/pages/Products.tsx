@@ -155,10 +155,11 @@ export default function Products() {
         const sellerIds = [...new Set(sellerProductsData.map((p) => p.seller_id))];
         const { data: sellersData } = await supabase
           .from("seller_profiles")
-          .select("id, full_name")
+          .select("id, full_name, is_on_vacation")
           .in("id", sellerIds)
           .eq("is_approved", true)
-          .eq("is_suspended", false);
+          .eq("is_suspended", false)
+          .eq("is_on_vacation", false);
 
         const sellerMap = new Map(sellersData?.map((s) => [s.id, s.full_name]) || []);
         setSellers(sellersData || []);
