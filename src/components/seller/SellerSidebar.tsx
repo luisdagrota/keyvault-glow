@@ -15,7 +15,8 @@ import {
   AlertTriangle,
   RefreshCcw,
   Tag,
-  MessageSquare
+  MessageSquare,
+  Trophy
 } from "lucide-react";
 import {
   Sheet,
@@ -91,6 +92,7 @@ export const SellerSidebar = ({ activeTab, setActiveTab, sellerId }: SellerSideb
 
   const menuItems = [
     { id: "overview", label: "Dashboard", icon: LayoutDashboard },
+    { id: "challenges", label: "Desafios", icon: Trophy },
     { id: "products", label: "Meus Produtos", icon: Package },
     { id: "coupons", label: "Cupons", icon: Tag },
     { id: "chats", label: "Chats", icon: MessageSquare, badge: unreadChats },
