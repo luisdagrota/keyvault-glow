@@ -4,11 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, ShoppingBag, TrendingUp, Loader2, Users } from "lucide-react";
+import { Star, ShoppingBag, TrendingUp, Loader2, Users, Palmtree } from "lucide-react";
 import { SellerBadges, calculateSellerBadges } from "@/components/seller/SellerBadges";
 import { SellerLevelCompact, calculateSellerLevel } from "@/components/seller/SellerLevel";
 import { OnlineIndicator } from "./OnlineIndicator";
 import { useSellerPresence } from "@/hooks/useSellerPresence";
+import { Badge } from "./ui/badge";
 
 interface TopSeller {
   id: string;
@@ -19,6 +20,7 @@ interface TopSeller {
   likes_count: number;
   avatar_url: string | null;
   follower_count: number;
+  is_on_vacation: boolean;
 }
 
 export const TopSellers = () => {
@@ -32,7 +34,7 @@ export const TopSellers = () => {
       // Get top 5 sellers ordered by total_sales, then by average_rating
       const { data, error } = await supabase
         .from("seller_profiles")
-        .select("id, full_name, total_sales, average_rating, created_at, user_id")
+        .select("id, full_name, total_sales, average_rating, created_at, user_id, is_on_vacation")
         .eq("is_approved", true)
         .eq("is_suspended", false)
         .order("total_sales", { ascending: false })
@@ -75,6 +77,7 @@ export const TopSellers = () => {
             likes_count: totalLikes,
             avatar_url: profile?.avatar_url || null,
             follower_count: followerCount || 0,
+            is_on_vacation: seller.is_on_vacation || false,
           };
         })
       );
@@ -188,7 +191,14 @@ export const TopSellers = () => {
                   </div>
 
                   <h3 className="font-semibold text-sm sm:text-base mb-1 truncate px-2 flex items-center justify-center gap-1.5">
-                    <OnlineIndicator isOnline={onlineSellers.includes(seller.id)} size="sm" />
+                    {seller.is_on_vacation ? (
+                      <Badge variant="secondary" className="bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30 text-[9px] px-1.5 py-0 h-4 flex items-center gap-0.5">
+                        <Palmtree className="h-2.5 w-2.5" />
+                        Férias
+                      </Badge>
+                    ) : (
+                      <OnlineIndicator isOnline={onlineSellers.includes(seller.id)} size="sm" />
+                    )}
                     {seller.full_name}
                   </h3>
 

@@ -1,5 +1,5 @@
 import { Button } from "./ui/button";
-import { Package, Eye, User, Tag } from "lucide-react";
+import { Package, Eye, User, Tag, Palmtree } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "./ui/badge";
 import { LikeButton } from "./LikeButton";
@@ -21,6 +21,7 @@ interface SellerProduct {
   seller_id: string;
   seller_name: string;
   slug?: string | null;
+  is_on_vacation?: boolean;
 }
 
 interface SellerProductCardProps {
@@ -105,7 +106,14 @@ export function SellerProductCard({ product }: SellerProductCardProps) {
           className="mt-1 flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground hover:text-primary transition-colors group/seller"
           onClick={(e) => e.stopPropagation()}
         >
-          <OnlineIndicator isOnline={isOnline} size="sm" />
+          {product.is_on_vacation ? (
+            <Badge variant="secondary" className="bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30 text-[9px] px-1.5 py-0 h-4 flex items-center gap-0.5">
+              <Palmtree className="h-2.5 w-2.5" />
+              Férias
+            </Badge>
+          ) : (
+            <OnlineIndicator isOnline={isOnline} size="sm" />
+          )}
           <User className="h-3 w-3" />
           <span className="truncate group-hover/seller:underline">por {product.seller_name}</span>
         </Link>
