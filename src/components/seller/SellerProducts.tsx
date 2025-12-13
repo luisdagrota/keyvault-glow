@@ -31,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Loader2, Zap, Hand, Key } from "lucide-react";
 import { SellerProductKeys } from "./SellerProductKeys";
+import { useCategories, CategoryWithSubcategories, Subcategory } from "@/hooks/useCategories";
 
 interface Product {
   id: string;
@@ -39,6 +40,7 @@ interface Product {
   price: number;
   image_url: string | null;
   category: string | null;
+  subcategory_id: string | null;
   stock: number;
   is_active: boolean;
   likes_count: number;
@@ -58,16 +60,23 @@ export const SellerProducts = ({ sellerId }: SellerProductsProps) => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [keysDialogProduct, setKeysDialogProduct] = useState<Product | null>(null);
   
+  const { categories, loading: loadingCategories } = useCategories();
+  
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [category, setCategory] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>("");
   const [stock, setStock] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState<string>('manual');
   const [deliveryContent, setDeliveryContent] = useState("");
   
   const { toast } = useToast();
+
+  // Get subcategories for selected category
+  const selectedCategory = categories.find(c => c.id === selectedCategoryId);
+  const availableSubcategories = selectedCategory?.subcategories || [];
 
   const fetchProducts = async () => {
     const { data, error } = await supabase
@@ -94,11 +103,23 @@ export const SellerProducts = ({ sellerId }: SellerProductsProps) => {
     setDescription("");
     setPrice("");
     setImageUrl("");
-    setCategory("");
+    setSelectedCategoryId("");
+    setSelectedSubcategoryId("");
     setStock("");
     setDeliveryMethod('manual');
     setDeliveryContent("");
     setEditingProduct(null);
+  };
+
+  // Find category by subcategory id
+  const findCategoryBySubcategoryId = (subcatId: string | null): string => {
+    if (!subcatId) return "";
+    for (const cat of categories) {
+      if (cat.subcategories.some(sub => sub.id === subcatId)) {
+        return cat.id;
+      }
+    }
+    return "";
   };
 
   const openEditDialog = (product: Product) => {
@@ -107,7 +128,9 @@ export const SellerProducts = ({ sellerId }: SellerProductsProps) => {
     setDescription(product.description || "");
     setPrice(product.price.toString());
     setImageUrl(product.image_url || "");
-    setCategory(product.category || "");
+    const catId = findCategoryBySubcategoryId(product.subcategory_id);
+    setSelectedCategoryId(catId);
+    setSelectedSubcategoryId(product.subcategory_id || "");
     setStock(product.stock.toString());
     setDeliveryMethod(product.delivery_method || 'manual');
     setDeliveryContent(product.delivery_content || "");
@@ -117,6 +140,16 @@ export const SellerProducts = ({ sellerId }: SellerProductsProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+
+    if (!selectedSubcategoryId) {
+      toast({ 
+        title: "Selecione uma subcategoria", 
+        description: "É obrigatório selecionar a categoria e subcategoria do produto.", 
+        variant: "destructive" 
+      });
+      setSaving(false);
+      return;
+    }
 
     if (deliveryMethod === 'automatic' && !deliveryContent.trim()) {
       toast({ 
@@ -128,13 +161,17 @@ export const SellerProducts = ({ sellerId }: SellerProductsProps) => {
       return;
     }
 
+    // Get category name for legacy field
+    const categoryName = selectedCategory?.name || null;
+
     const productData = {
       seller_id: sellerId,
       name,
       description,
       price: parseFloat(price),
       image_url: imageUrl || null,
-      category: category || null,
+      category: categoryName,
+      subcategory_id: selectedSubcategoryId,
       stock: parseInt(stock) || 0,
       delivery_method: deliveryMethod,
       delivery_content: deliveryMethod === 'automatic' ? deliveryContent : null,
@@ -273,14 +310,44 @@ export const SellerProducts = ({ sellerId }: SellerProductsProps) => {
                   placeholder="https://..."
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="category">Categoria</Label>
-                <Input
-                  id="category"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  placeholder="Ex: Games, Contas, etc"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Categoria *</Label>
+                  <Select value={selectedCategoryId} onValueChange={(val) => {
+                    setSelectedCategoryId(val);
+                    setSelectedSubcategoryId(""); // Reset subcategory when category changes
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map(cat => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.icon} {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Subcategoria *</Label>
+                  <Select 
+                    value={selectedSubcategoryId} 
+                    onValueChange={setSelectedSubcategoryId}
+                    disabled={!selectedCategoryId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={selectedCategoryId ? "Selecione..." : "Escolha a categoria"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableSubcategories.map(sub => (
+                        <SelectItem key={sub.id} value={sub.id}>
+                          {sub.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               
               {/* Delivery Method Section */}

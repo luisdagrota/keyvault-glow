@@ -21,6 +21,7 @@ import SellerProductDetail from "./pages/SellerProductDetail";
 import Checkout from "./pages/Checkout";
 import Statistics from "./pages/Statistics";
 import Cart from "./pages/Cart";
+import CategoryPage from "./pages/CategoryPage";
 import { DiscordButton } from "./components/DiscordButton";
 import { CartProvider } from "./contexts/CartContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -55,6 +56,8 @@ function AppContent() {
           <Route path="/produto/:slug" element={<SellerProductDetail />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/categoria/:categorySlug" element={<CategoryPage />} />
+          <Route path="/categoria/:categorySlug/:subcategorySlug" element={<CategoryPage />} />
           <Route path="/estatisticas" element={<Statistics />} />
           <Route path="/pedido-concluido" element={<PedidoConcluido />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

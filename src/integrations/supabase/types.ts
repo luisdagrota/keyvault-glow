@@ -88,6 +88,39 @@ export type Database = {
           },
         ]
       }
+      categories: {
+        Row: {
+          created_at: string
+          display_order: number
+          icon: string
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           attachment_name: string | null
@@ -1085,6 +1118,7 @@ export type Database = {
           seller_id: string
           slug: string | null
           stock: number
+          subcategory_id: string | null
           tags: string[] | null
           updated_at: string
         }
@@ -1105,6 +1139,7 @@ export type Database = {
           seller_id: string
           slug?: string | null
           stock?: number
+          subcategory_id?: string | null
           tags?: string[] | null
           updated_at?: string
         }
@@ -1125,6 +1160,7 @@ export type Database = {
           seller_id?: string
           slug?: string | null
           stock?: number
+          subcategory_id?: string | null
           tags?: string[] | null
           updated_at?: string
         }
@@ -1134,6 +1170,13 @@ export type Database = {
             columns: ["seller_id"]
             isOneToOne: false
             referencedRelation: "seller_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_products_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "subcategories"
             referencedColumns: ["id"]
           },
         ]
@@ -1481,6 +1524,47 @@ export type Database = {
             columns: ["seller_id"]
             isOneToOne: false
             referencedRelation: "seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subcategories: {
+        Row: {
+          category_id: string
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcategories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
             referencedColumns: ["id"]
           },
         ]

@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, ShoppingCart, FileText, Home, MessageSquare, Ticket, Star, Users, PackageCheck, Flag, Bell, LifeBuoy, ShieldAlert, Image, RefreshCcw, Trophy } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, FileText, Home, MessageSquare, Ticket, Star, Users, PackageCheck, Flag, Bell, LifeBuoy, ShieldAlert, Image, RefreshCcw, Trophy, FolderTree } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -180,6 +180,7 @@ export function AdminSidebar() {
     { title: "Denúncias", url: "/admin/complaints", icon: Flag, badge: pendingReports },
     { title: "Antifraude", url: "/admin/fraud", icon: ShieldAlert, badge: pendingFraudAlerts },
     { title: "Desafios", url: "/admin/challenges", icon: Trophy },
+    { title: "Categorias", url: "/admin/categories", icon: FolderTree },
     { title: "Chats", url: "/admin/chats", icon: MessageSquare, badge: unreadChats },
     { title: "Relatórios", url: "/admin/reports", icon: FileText },
   ];
